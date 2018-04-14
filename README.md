@@ -41,3 +41,7 @@ Implementing Google's DistBelief paper
 	- __init__ - get data from the user, get pytorch model from the user, initialize MLModelObject, post that to all of the clients
 	- 2 above API routes
 	- updateWeights() function
+
+
+### References
+- [Pytorch distributed tutorial](http://pytorch.org/tutorials/intermediate/dist_tuto.html)

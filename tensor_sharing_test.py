@@ -20,11 +20,15 @@ def send_tensor(rank, size):
     print('Rank {}:'.format(dist.get_rank()), test)
     dist.send(test, dst=0)
 
+
 def receive_tensor(rank, size):
     test = torch.zeros(3, 3)
     print('Rank {}:'.format(dist.get_rank()), test)
-    dist.recv(test, src=1)
-    print('Rank {}:'.format(dist.get_rank()), test)
+    i = 0
+    while True:
+        i += 1
+        dist.recv(test)
+        print('Rank {} tensor {}:'.format(dist.get_rank(), i), test)
 
 def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment. """
@@ -40,10 +44,7 @@ def init_processes(rank, size, fn, backend='tcp'):
 if __name__ == "__main__":
     size = 2
     processes = []
-    if sys.argv[1] == 'SERVER':
-        p = Process(target=init_processes, args=(0, size, receive_tensor))
-    else:
-        p = Process(target=init_processes, args=(1, size, send_tensor))
+    p = Process(target=init_processes, args=(int(sys.argv[1]), size, receive_tensor))
 
     p.start()
     processes.append(p)

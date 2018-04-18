@@ -32,7 +32,7 @@ def receive_tensor(rank, size):
 
 def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment. """
-    os.environ['MASTER_ADDR'] = '192.168.1.16'
+    os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = '29500'
     os.environ['WORLD_SIZE'] = str(size)
     os.environ['RANK'] = str(rank)
@@ -44,7 +44,8 @@ def init_processes(rank, size, fn, backend='tcp'):
 if __name__ == "__main__":
     size = 2
     processes = []
-    p = Process(target=init_processes, args=(int(sys.argv[1]), size, receive_tensor))
+    num = int(sys.argv[1])
+    p = Process(target=init_processes, args=(num, size, receive_tensor if num == 0 else send_tensor))
 
     p.start()
     processes.append(p)

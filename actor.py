@@ -22,7 +22,6 @@ CODE_ACTIONS = {
 }
 
 class ModelActor(gevent.Greenlet):
-
     def __init__(self, model):
         self.model = model
         gevent.Greenlet.__init__(self)
@@ -57,7 +56,7 @@ class ModelActor(gevent.Greenlet):
     def send_message(self, message, payload):
         m_parameter = torch.Tensor([CODE_ACTIONS[message]])
         m_parameter = torch.cat(m_parameter, payload)
-        dist.send(tensor=m_parameter)
+        dist.isend(tensor=m_parameter)
 
 class ParameterShardActor(Actor):
 
@@ -77,7 +76,7 @@ class ParameterShardActor(Actor):
         message_code = m_parameter[0]
 
         if message == 'ParmaterRequest':
-            self.send_m_parameter('ParameterUpdate', self.parameters)
+            self.send_message('ParameterUpdate', self.parameters)
         
         if message == 'GradientUpdate':
             #get the gradients

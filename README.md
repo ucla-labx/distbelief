@@ -45,3 +45,6 @@ Implementing Google's DistBelief paper
 
 ### References
 - [Pytorch distributed tutorial](http://pytorch.org/tutorials/intermediate/dist_tuto.html)
+
+
+## Actor model

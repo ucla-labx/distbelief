@@ -15,41 +15,49 @@ ACTION_CODES = {
     3: 'Train',
 }
 CODE_ACTIONS = {
-        'ParameterRequest': 0,
-        'GradientUpdate': 1,
-        'ParameterUpdate': 2,
-        'Train': 3,
+    'ParameterRequest': 0,
+    'GradientUpdate': 1,
+    'ParameterUpdate': 2,
+    'Train': 3,
 }
 
-class Actor(gevent.Greenlet):
+class ModelActor(gevent.Greenlet):
 
     def __init__(self, model):
         self.model = model
         gevent.Greenlet.__init__(self)
 
-    def receive(self, m_parameter):
+    def receive(self, message, payload):
         raise NotImplemented()
 
     def _run(self):
         self.running = True
+        m_parameter = torch.zeros(self.squash_model().size())
         while self.running:
-            dist.recv(tensor=self.m_parameter)
-            self.receive(m_parameter)
+            dist.recv(tensor=m_parameter)
+            self.receive(ACTION_CODES[m_parameter[0]], m_parameter[1:])
 
-    def squash_params(self,):
+    def squash_model(self, grads=False):
         m_parameter = torch.Tensor([0])
+        for parameter in list(self.model.parameters()):
+            if grads:
+                m_parameter = torch.cat(m_parameter, parameter.grad.view(-1))
+            else:
+                m_parameter = torch.cat(m_parameter, parameter.data.view(-1))
+        return m_parameter[1:]
 
-        def join_tensors(x, y):
-            pass
-            
+    def set_params(self, parameter_update):
+        current_index = 0
         for parameter in list(model.parameters()):
-            m_prameter = torch.cat(m_parameter, parameter.data.view(-1))
+            numel = parameter.data.numel()
+            size = parameter.data.size()
+            paramater.data = paramater_update[current_index:current_index+numel].view(size)
+            current_index += numel
 
-
-
-
-        
-    def set_params(self, ):
+    def send_message(self, message, payload):
+        m_parameter = torch.Tensor([CODE_ACTIONS[message]])
+        m_parameter = torch.cat(m_parameter, payload)
+        dist.send(tensor=m_parameter)
 
 class ParameterShardActor(Actor):
 
@@ -61,44 +69,39 @@ class ParameterShardActor(Actor):
         :param random_seed:
         """
         
-        self.m_parameters = {name, torch.nn.init.xavier_uniform(tensor) for name, tensor in params}
+        self.parameters = torch.zeros(self.squash_model().size())
         self.learning_rate = learning_rate
 
 
-    def receive(self, m_parameter):
-        m_parameter = torch.zeros(self.parameters)
-        dist.recv(tensor=m_parameter)
-        message_code = m_parameter[0].item()
+    def receive(self, message, gradient):
+        message_code = m_parameter[0]
 
-        if ACTION_CODES[message_code]== 'ParmaterRequest':
-            self.m_parameters[0] = CODE_ACTIONS['ParameterUpdate']
-            dist.send(self.parameters)
+        if message == 'ParmaterRequest':
+            self.send_m_parameter('ParameterUpdate', self.parameters)
         
-        if ACTION_CODES[message_code] == 'GradientUpdate':
+        if message == 'GradientUpdate':
             #get the gradients
-            self.m_parameters -= self.learning_rate *m_parameter
+            self.parameters -= self.learning_rate * gradient
 
 class SGDClientActor(Actor):
 
-    def __init__(self, model):
+    def __init__(self, learning_rate, model):
         self.model = model
-        
-        self.m_parameters = {name, torch.nn.init.xavier_uniform(tensor) for name, tensor in params}
         self.learning_rate = learning_rate
+        
+    def receive(self, message, parameter):
 
-
-    def receive(self, m_parameter):
-        m_parameter = torch.zeros(self.squash_params())
-        dist.recv(tensor=m_parameter)
-        message_code = m_parameter[0].item()
-
-        if ACTION_CODES[message_code]== 'ParmaterUpdate':
-            self.set_params(m_parameter)
+        if message == 'ParmaterUpdate':
+            self.set_params(parameter)
             gevent.sleep(0)
         
-        if ACTION_CODES[message_code] == 'Train':
+        if message == 'Train':
             self.model.train()
             for batch_idx, (data, target) in enumerate(train_loader):
+
+                # pull params
+                self.send_message('ParameterRequest', torch.zeros(self.squash_mode().size()))
+
                 if args.cuda:
                     data, target = data.cuda(), target.cuda()
                 data, target = Variable(data), Variable(target)
@@ -107,6 +110,8 @@ class SGDClientActor(Actor):
                 loss = F.nll_loss(output, target)
                 loss.backward()
 
-                #get gradients programatically
-                gradients = squash_params()
-                dist.send(gradients)
+                gradients = self.squash_model(grads=True)
+                self.send_message('GraidentUpdate', gradients)
+
+                # and this is our internal gradient update
+                self.set_params(self.squash_model() - self.learning_rete * gradients)

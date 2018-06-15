@@ -15,6 +15,7 @@ from torchvision import datasets, transforms
 
 def init_processes(rank, size, fn, backend='tcp'):
     """Initialize the distributed environment."""
+
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = '29500'
     os.environ['WORLD_SIZE'] = str(size)

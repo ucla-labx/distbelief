@@ -15,7 +15,7 @@ class SGDClientActor(Actor):
             self.model.train()
             for batch_idx, (data, target) in enumerate(train_loader):
 
-                # pull params
+                # pull params synchronously for now (TODO: figure out how to express SGD client with async as an actor)
                 self.send_message('ParameterRequest', torch.zeros(self.squash_mode().size()))
 
                 if args.cuda:

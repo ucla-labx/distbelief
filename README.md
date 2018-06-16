@@ -1,6 +1,10 @@
 # distbelief
 Implementing Google's DistBelief paper
 
+### Usage Instructions
+
+For a test, run `python main.py`. This will start a two-way communication between two Actors, which use gevent's Greenlets.
+
 ## DownpourSGD for PyTorch
 
 DownpourSGD is pretty simple, there are two core concepts - a parameter server and a training node.

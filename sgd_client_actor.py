@@ -17,6 +17,7 @@ class SGDClientActor(Actor):
 
                 # pull params synchronously for now (TODO: figure out how to express SGD client with async as an actor)
                 self.send_message('ParameterRequest', torch.zeros(self.squash_mode().size()))
+                gevent.sleep(0) #give up until we get our parameter update
 
                 if args.cuda:
                     data, target = data.cuda(), target.cuda()

@@ -5,7 +5,6 @@ Actor class for python written in gevent.
 import gevent
 import torch
 from gevent.queue import Queue
-from util import serialize_tensor, deserialize_tensor
 import torch.distributed as dist
 
 ACTION_CODES = {
@@ -24,17 +23,30 @@ CODE_ACTIONS = {
 class ModelActor(gevent.Greenlet):
     def __init__(self, model):
         self.model = model
+        self.inbox = Queue()
         gevent.Greenlet.__init__(self)
 
     def receive(self, message, payload):
-        raise NotImplemented()
+        raise NotImplementedError('Classes should inheret this method and override.')
 
     def _run(self):
         self.running = True
-        m_parameter = torch.zeros(self.squash_model().size())
-        while self.running:
-            dist.recv(tensor=m_parameter)
-            self.receive(ACTION_CODES[m_parameter[0]], m_parameter[1:])
+        if not self.model:
+            # just demo code
+            run_count = 0
+            while self.running:
+                message = self.inbox.get()
+                self.receive(message)
+                gevent.sleep(0)
+                run_count +=1 
+                if run_count == 10:
+                    return True # exit
+            # return True
+        else:
+            m_parameter = torch.zeros(self.squash_model().size())
+            while self.running:
+                dist.recv(tensor=m_parameter)
+                self.receive(ACTION_CODES[m_parameter[0]], m_parameter[1:])
 
     def squash_model(self, grads=False):
         m_parameter = torch.Tensor([0])

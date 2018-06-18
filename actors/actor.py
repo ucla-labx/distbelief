@@ -6,6 +6,7 @@ import gevent
 import torch
 from gevent.queue import Queue
 import torch.distributed as dist
+from enum import Enum
 
 ACTION_CODES = {
     0: 'ParameterRequest',
@@ -20,19 +21,19 @@ CODE_ACTIONS = {
     'Train': 3,
 }
 
+
 class ModelActor(gevent.Greenlet):
     def __init__(self, model):
         self.model = model
         self.inbox = Queue()
+        self.running = False
         gevent.Greenlet.__init__(self)
 
     def receive(self, message, payload):
         raise NotImplementedError('Classes should inheret this method and override.')
 
-    def _run(self):
-        self.running = True
-        if not self.model:
-            # just demo code
+    def _run_demo_path(self):
+        # just demo code
             run_count = 0
             while self.running:
                 message = self.inbox.get()
@@ -41,12 +42,16 @@ class ModelActor(gevent.Greenlet):
                 run_count +=1 
                 if run_count == 10:
                     return True # exit
-            # return True
-        else:
-            m_parameter = torch.zeros(self.squash_model().size())
-            while self.running:
-                dist.recv(tensor=m_parameter)
-                self.receive(ACTION_CODES[m_parameter[0]], m_parameter[1:])
+
+    def _run(self):
+        self.running = True
+        if not self.model:
+            self._run_demo_path()
+        # else:
+        #     m_parameter = torch.zeros(self.squash_model().size())
+        #     while self.running:
+        #         dist.recv(tensor=m_parameter)
+        #         self.receive(ACTION_CODES[m_parameter[0]], m_parameter[1:])
 
     def squash_model(self, grads=False):
         m_parameter = torch.Tensor([0])

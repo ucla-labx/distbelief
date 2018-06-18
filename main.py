@@ -5,6 +5,11 @@ import gevent
 from gevent.queue import Queue
 from gevent import Greenlet
 from actors.actor import ModelActor
+from actors.parameter_shard_actor import ParameterShardActor
+from actors.sgd_client_actor import SGDClientActor
+from models.mnist import Net
+
+DEFAULT_LEARNING_RATE = 0.005
 
 class Pinger(ModelActor):
     def receive(self, message):
@@ -21,10 +26,18 @@ class Ponger(ModelActor):
 
 
 if __name__ == '__main__':
-	ping = Pinger(model=None)
-	pong = Ponger(model=None)
+    model = Net()
+    parameter_shard = ParameterShardActor(learning_rate=DEFAULT_LEARNING_RATE, model=model)
+    sgd_client = SGDClientActor(learning_rate=DEFAULT_LEARNING_RATE, model=model, server_actor=parameter_shard)
+    parameter_shard.add_client(sgd_client)
+    actors = [parameter_shard, sgd_client]
+    for actor in actors:
+        actor.start()
+    gevent.joinall(actors)
 
-	ping.start()
-	pong.start()
-	ping.inbox.put('start')
-	gevent.joinall([ping, pong])
+	# ping = Pinger(model=None)
+	# pong = Ponger(model=None)
+	# ping.start()
+	# pong.start()
+	# ping.inbox.put('start')
+	# gevent.joinall([ping, pong])

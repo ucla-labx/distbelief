@@ -6,6 +6,7 @@ from utils import Messages, ModelMessage
 class SGDClientActor(ModelActor):
 
     def __init__(self, learning_rate, model, server_actor):
+
         self.learning_rate = learning_rate
         super().__init__(model)
         self.parameters = None # need to request parameters from parameter_shard actor
@@ -17,6 +18,7 @@ class SGDClientActor(ModelActor):
 
     def _run(self):
         assert not self.running
+        # a call to super starts the greenlet running
         super()._run()
         assert self.running
         print('in sgd client run')
@@ -37,6 +39,20 @@ class SGDClientActor(ModelActor):
             pass
         gevent.sleep(0)
 
+    def _should_request_parameters(self):
+        return self.run_count % self.request_frequency == 0
+
+    def _get_parameters_async(self):
+        print('in client: requesting parameters')
+        self.send_message(message_type=Messages.ParameterRequest)
+        while self.inbox.empty():
+            # waiting for parameters
+            print('client waiting for parameters...')
+            gevent.sleep(3)
+        assert not self.inbox.empty()
+        self.receive()
+
+
     def send_message(self, message_type):
         if message_type == Messages.ParameterRequest:
             # put parameter request into server's inbox
@@ -47,7 +63,8 @@ class SGDClientActor(ModelActor):
 
 
 
-    def receive(self, message, parameter):
+    def receive(self, message=None, parameter=None):
+        message = self.inbox.get()
 
         if message == 'ParamaterUpdate':
             self.set_params(parameter)

@@ -1,16 +1,16 @@
 import gevent
-from .actor import ModelActor
-from utils import Messages
+from utils import Messages, send_message, squash_model, set_params
+import torch
+import time
 
 
-class SGDClientActor(ModelActor):
+class SGDClient():
 
     def __init__(self, learning_rate, model, rank=0, size=0):
         self.learning_rate = learning_rate
-        super().__init__(model)
-        self.parameters = None # need to request parameters from parameter_shard actor
         self.request_frequency = 5 # request every 5 self.runs (including 0)
         self.run_count = 0
+        self.model = model
 
     def receive(self, message, parameter):
 
@@ -19,15 +19,42 @@ class SGDClientActor(ModelActor):
             self.set_params(parameter)
             print("working")
             gevent.sleep(0)
+
+    def run(self):
+        _LOGGER.info("Running!")
+        self.running = True
+        while self.running:
+            _LOGGER.info("Polling for data")
+            dist.recv(tensor=self.m_parameter)
+            _LOGGER.info("Got message")
+            self.receive(ACTION_CODES[self.m_parameter[0].item()], self.m_parameter[1:])
         
 
-    def run():
+    def run(self):
             self.model.train()
+            self.model.shared_memory()
+            num_processes = 2
+            # NOTE: this is required for the ``fork`` method to work
+            self.model.share_memory()
+            processes = []
+            for rank in range(num_processes):
+                p = mp.Process(target=train, args=(model,))
+                p.start()
+                processes.append(p)
+            for p in processes:
+              p.join()
+
+
+
+
+
+
+
             while True:
                 # pull params synchronously for now (TODO: figure out how to express SGD client with async as an actor) 
-                self.send_message('ParameterRequest', torch.zeros(self.squash_mode().size()))
                 print("sent param request method")
-
+                send_message('ParameterRequest', torch.zeros(squash_model(self.model).size()))
+                time.sleep(5)
 
                 # if args.cuda:
                     # data, target = data.cuda(), target.cuda()
@@ -37,8 +64,7 @@ class SGDClientActor(ModelActor):
                 # loss = F.nll_loss(output, target)
                 # loss.backward()
 
-                gradients = self.squash_model(grads=True)
-                self.send_message('GraidentUpdate', gradients)
+                # self.send_message('GraidentUpdate', gradients)
 
                 # and this is our internal gradient update
-                self.set_params(self.squash_model() - self.learning_rete * gradients)
+                # set_params(self.model, self.squash_model() - self.learning_rate * gradients)

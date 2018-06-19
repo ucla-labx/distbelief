@@ -4,10 +4,9 @@ gevent actor test
 import gevent
 from gevent.queue import Queue
 from gevent import Greenlet
-from actors.actor import ModelActor
-from actors.parameter_shard_actor import ParameterShardActor
-from actors.sgd_client_actor import SGDClientActor
 from models.mnist import Net
+from parameter_server import ParameterServer
+from train import SGDClient
 import os
 import torch
 import torch.distributed as dist
@@ -15,15 +14,14 @@ from torch.multiprocessing import Process
 
 DEFAULT_LEARNING_RATE = 0.005
 
-def run(rank, size):
+def train_dist(rank, size):
     """ Distributed function to be implemented later. """
     model=Net()
     if rank == 0:
-        p = ParameterShardActor(learning_rate=DEFAULT_LEARNING_RATE, model=model, rank=rank, size=size)
+        p = ParameterServer(learning_rate=DEFAULT_LEARNING_RATE, model=model, rank=rank, size=size)
 
     else:
-        p = SGDClientActor(learning_rate=DEFAULT_LEARNING_RATE, model=model, rank=rank, size=size)
-    print("actor created")
+        p = SGDClient(learning_rate=DEFAULT_LEARNING_RATE, model=model, rank=rank, size=size)
     p.run()
 
 def init_processes(rank, size, fn, backend='tcp'):
@@ -38,7 +36,7 @@ if __name__ == "__main__":
     size = 2
     processes = []
     for rank in range(size):
-        p = Process(target=init_processes, args=(rank, size, run))
+        p = Process(target=init_processes, args=(rank, size, train_dist))
         p.start()
         processes.append(p)
 

@@ -1,4 +1,5 @@
 from enum import Enum
+import logging
 
 class Messages(Enum):
     ParameterRequest = 'parameter_request'
@@ -6,13 +7,9 @@ class Messages(Enum):
     ParameterUpdate = 'paramater_update'
     Train = 'train'
 
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
-class ModelMessage(object):
-	def __init__(self, message_type, parameters=None, gradients=None):
-		self.message_dict = {
-		'message_type': message_type,
-		'parameters': parameters,
-		'gradients': gradients
-		}
-
-	
+_LOGGER = logging.getLogger(__name__)

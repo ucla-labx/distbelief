@@ -18,33 +18,31 @@ from downpour_sgd import DownpourSGD, init_sgd
 import os
 import torch
 import torch.distributed as dist
-from utils import squash_model, set_params, init_processes, send_message
+from utils import squash_model, set_params, init_processes, send_message, DEFAULT_LEARNING_RATE
 
 import threading
 
-DEFAULT_LEARNING_RATE = 0.005
 
-def train(args, model, device, train_loader, epoch):
+def train(args, model, device, train_loader, nb_epoch):
     model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        print("sent param request method")
-        send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
-        data, target = data.to(device), target.to(device)
-        output = model(data)
-        loss = F.nll_loss(output, target)
-        loss.backward()
-        gradients = squash_model(model, grads=True)
-        # print(gradients)
-        send_message('GradientUpdate', gradients)
+    for epoch in range(nb_epoch):
+        for batch_idx, (data, target) in enumerate(train_loader):
+            send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            loss = F.nll_loss(output, target)
+            loss.backward()
+            gradients = squash_model(model, grads=True)
+            # print(gradients)
+            send_message('GradientUpdate', gradients)
 
-        # and this is our internal gradient update
-        #set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
+            # and this is our internal gradient update
+            set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
 
-        #send_message here
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                epoch, batch_idx * len(data), len(train_loader.dataset),
-                100. * batch_idx / len(train_loader), loss.item()))
+            if batch_idx % args.log_interval == 0:
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch, batch_idx * len(data), len(train_loader.dataset),
+                    100. * batch_idx / len(train_loader), loss.item()))
 
 def test(args, model, device, test_loader):
     model.eval()
@@ -101,7 +99,7 @@ def main(*args, **kwargs):
     model.share_memory()
 
     # using threads
-    grad_update = threading.Thread(target=train, args=(args, model, device, train_loader, 0))
+    grad_update = threading.Thread(target=train, args=(args, model, device, train_loader, 10))
     grad_update.start()
     train_thread = threading.Thread(target=init_sgd)
     train_thread.start()

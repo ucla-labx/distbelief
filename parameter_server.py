@@ -1,7 +1,7 @@
 import gevent
 import os
 import torch
-from utils import Messages, squash_model, ACTION_CODES, CODE_ACTIONS, send_message, init_processes 
+from utils import Messages, squash_model, ACTION_CODES, CODE_ACTIONS, send_message, init_processes , DEFAULT_LEARNING_RATE
 import torch.distributed as dist
 from models.mnist import Net
 from torch.multiprocessing import Process
@@ -14,7 +14,6 @@ logging.basicConfig(
     datefmt='%Y-%m-%d %H:%M:%S')
 
 _LOGGER = logging.getLogger(__name__)
-DEFAULT_LEARNING_RATE = 0.005
 
 class ParameterServer():
 
@@ -34,7 +33,7 @@ class ParameterServer():
     def receive(self, message, parameter):
         print("Processing message: {}".format(message))
         if message == 'ParameterRequest':
-            send_message('ParameterUpdate', self.m_parameter[1:0], dst=1)    
+            send_message('ParameterUpdate', self.m_parameter[1:], dst=1)    
 
         elif message == 'GradientUpdate':
             self.parameter_shard -= self.learning_rate * parameter

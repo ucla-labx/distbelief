@@ -16,6 +16,7 @@ CODE_ACTIONS = {
     'ParameterUpdate': 2,
     'Train': 3,
 }
+DEFAULT_LEARNING_RATE = 0.001
 
 def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment. """

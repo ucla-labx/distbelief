@@ -4,7 +4,7 @@ import torch
 import time
 
 
-class SGDClient():
+class DownpourSGD():
 
     def __init__(self, learning_rate, model, rank=0, size=0):
         self.learning_rate = learning_rate
@@ -29,16 +29,18 @@ class SGDClient():
             _LOGGER.info("Got message")
             self.receive(ACTION_CODES[self.m_parameter[0].item()], self.m_parameter[1:])
         
-
     def run(self):
             self.model.train()
-            self.model.shared_memory()
             num_processes = 2
             # NOTE: this is required for the ``fork`` method to work
             self.model.share_memory()
             processes = []
             for rank in range(num_processes):
-                p = mp.Process(target=train, args=(model,))
+                if rank ==0:
+                    #training
+                    p = mp.Process(target=train, args=(model,))
+                else if rank == 1:
+                    p = mp.Process(target=gradient_update, )
                 p.start()
                 processes.append(p)
             for p in processes:

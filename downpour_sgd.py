@@ -13,8 +13,6 @@ logging.basicConfig(
 
 _LOGGER = logging.getLogger(__name__)
 
-DEFAULT_LEARNING_RATE = 0.005
-
 
 
 class DownpourSGD():

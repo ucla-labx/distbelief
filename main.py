@@ -27,9 +27,11 @@ def train(args, model, device, train_loader, nb_epoch):
     model.train()
     for epoch in range(nb_epoch):
         for batch_idx, (data, target) in enumerate(train_loader):
-            send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
+            if batch_idx % 10 == 0:
+                send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
             data, target = data.to(device), target.to(device)
             output = model(data)
+            model.zero_grad()
             loss = F.nll_loss(output, target)
             loss.backward()
             gradients = squash_model(model, grads=True)

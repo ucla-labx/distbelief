@@ -9,6 +9,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 import gevent
+import time
 from gevent.queue import Queue
 from gevent import Greenlet
 from models.mnist import Net
@@ -17,8 +18,9 @@ from downpour_sgd import DownpourSGD, init_sgd
 import os
 import torch
 import torch.distributed as dist
-from torch.multiprocessing import Process
 from utils import squash_model, set_params, init_processes, send_message
+
+import threading
 
 DEFAULT_LEARNING_RATE = 0.005
 
@@ -32,11 +34,11 @@ def train(args, model, device, train_loader, epoch):
         loss = F.nll_loss(output, target)
         loss.backward()
         gradients = squash_model(model, grads=True)
-        print(gradients)
+        # print(gradients)
         send_message('GradientUpdate', gradients)
 
         # and this is our internal gradient update
-        set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
+        #set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
 
         #send_message here
         if batch_idx % args.log_interval == 0:
@@ -98,18 +100,18 @@ def main(*args, **kwargs):
     model = Net().to(device)
     model.share_memory()
 
-    size = 2
-    processes = []
-    for rank in range(size):
-        if rank ==0: 
-            p = Process(target=train, args=(args, model, device, train_loader, 0))
-        else:
-            p = Process(target=init_sgd)
-        p.start()
-        processes.append(p)
+    # using threads
+    grad_update = threading.Thread(target=train, args=(args, model, device, train_loader, 0))
+    grad_update.start()
+    train_thread = threading.Thread(target=init_sgd)
+    train_thread.start()
 
-    for p in processes:
-        p.join()
+def test_server(rank, size):
+    model = Net()
+    while True:
+        print("TESTING")
+        send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
+        time.sleep(5)
 
 
 if __name__ == "__main__":

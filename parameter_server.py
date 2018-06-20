@@ -29,23 +29,23 @@ class ParameterServer():
         self.learning_rate = learning_rate
         _LOGGER.info("Setting m_parameter")
         self.m_parameter = torch.zeros(squash_model(model).numel() + 1)
+        self.parameter_shard = torch.zeros(squash_model(model).numel())
 
     def receive(self, message, parameter):
         print("Processing message: {}".format(message))
         if message == 'ParameterRequest':
-            send_message('ParameterUpdate', self.parameters, dst=1)    
+            send_message('ParameterUpdate', self.m_parameter[1:0], dst=1)    
 
         elif message == 'GradientUpdate':
-            self.parameters -= self.learning_rate * gradient
+            self.parameter_shard -= self.learning_rate * parameter
 
     def run(self):
         _LOGGER.info("Parameter Server Running!")
         self.running = True
         while self.running:
             _LOGGER.info("Polling for data")
-            req = dist.recv(tensor=self.m_parameter)
+            dist.recv(tensor=self.m_parameter)
             _LOGGER.info("Got message")
-            req.wait()
             self.receive(ACTION_CODES[self.m_parameter[0].item()], self.m_parameter[1:])
 
 def init_server(rank, size):

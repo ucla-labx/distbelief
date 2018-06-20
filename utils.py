@@ -1,5 +1,6 @@
 from enum import Enum
 import logging
+import os
 import torch
 import torch.distributed as dist
 
@@ -15,6 +16,13 @@ CODE_ACTIONS = {
     'ParameterUpdate': 2,
     'Train': 3,
 }
+
+def init_processes(rank, size, fn, backend='tcp'):
+    """ Initialize the distributed environment. """
+    os.environ['MASTER_ADDR'] = '127.0.0.1'
+    os.environ['MASTER_PORT'] = '29500'
+    dist.init_process_group(backend, rank=rank, world_size=size)
+    fn(rank, size)
 
 
 class Messages(Enum):
@@ -44,10 +52,10 @@ def set_params(model, parameter_update):
     for parameter in list(model.parameters()):
         numel = parameter.data.numel()
         size = parameter.data.size()
-        paramater.data = paramater_update[current_index:current_index+numel].view(size)
+        parameter.data = parameter_update[current_index:current_index+numel].view(size)
         current_index += numel
 
 def send_message(message, payload, dst=0):
     m_parameter = torch.Tensor([CODE_ACTIONS[message]])
     m_parameter = torch.cat((m_parameter, payload))
-    dist.isend(tensor=m_parameter, dst=dst)
+    dist.send(tensor=m_parameter, dst=dst)

@@ -12,39 +12,33 @@ import gevent
 from gevent.queue import Queue
 from gevent import Greenlet
 from models.mnist import Net
-from server.parameter_server import ParameterServer
-from client.downpour_sgd import DownpourSGD
+from parameter_server import ParameterServer
+from downpour_sgd import DownpourSGD, init_sgd
 import os
 import torch
 import torch.distributed as dist
 from torch.multiprocessing import Process
+from utils import squash_model, set_params, init_processes, send_message
 
 DEFAULT_LEARNING_RATE = 0.005
 
-def init_server(rank, size):
-    model = Net()
-    server = ParameterServer(learning_rate=DEFAULT_LEARNING_RATE, model=model, rank=rank, size=size)
-    server.run()
-
-
-def init_processes(rank, size, fn, backend='tcp'):
-    """ Initialize the distributed environment. """
-    os.environ['MASTER_ADDR'] = '127.0.0.1'
-    os.environ['MASTER_PORT'] = '29500'
-    dist.init_process_group(backend, rank=rank, world_size=size)
-    fn(rank, size)
-
-def train(args, model, device, train_loader, optimizer, epoch):
+def train(args, model, device, train_loader, epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
+        print("sent param request method")
+        send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
         data, target = data.to(device), target.to(device)
-        optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
         loss.backward()
+        gradients = squash_model(model, grads=True)
+        print(gradients)
+        send_message('GradientUpdate', gradients)
+
+        # and this is our internal gradient update
+        set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
 
         #send_message here
-        optimizer.step()
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
@@ -67,7 +61,7 @@ def test(args, model, device, test_loader):
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
 
-def main():
+def main(*args, **kwargs):
     # Training settings
     parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
     parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='input batch size for training (default: 64)')
@@ -102,21 +96,22 @@ def main():
 
 
     model = Net().to(device)
-    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+    model.share_memory()
 
-    for epoch in range(1, args.epochs + 1):
-        train(args, model, device, train_loader, optimizer, epoch)
-        test(args, model, device, test_loader)
-
-
-if __name__ == "__main__":
     size = 2
     processes = []
     for rank in range(size):
-        p = Process(target=init_processes, args=(rank, size, train_dist))
+        if rank ==0: 
+            p = Process(target=train, args=(args, model, device, train_loader, 0))
+        else:
+            p = Process(target=init_sgd)
         p.start()
         processes.append(p)
 
     for p in processes:
         p.join()
+
+
+if __name__ == "__main__":
+    init_processes(1, 2, main)
 

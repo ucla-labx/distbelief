@@ -60,4 +60,4 @@ def set_params(model, parameter_update):
 def send_message(message, payload, dst=0):
     m_parameter = torch.Tensor([CODE_ACTIONS[message]])
     m_parameter = torch.cat((m_parameter, payload))
-    dist.isend(tensor=m_parameter, dst=dst)
+    dist.send(tensor=m_parameter, dst=dst)

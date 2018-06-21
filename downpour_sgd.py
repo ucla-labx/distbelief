@@ -1,4 +1,7 @@
-import gevent
+"""
+This class listens for a ParameterUpdate from the parameter server and then updates the model accordingly
+"""
+
 from utils import Messages, send_message, squash_model, set_params, ACTION_CODES, DEFAULT_LEARNING_RATE
 import torch
 import time
@@ -13,13 +16,8 @@ logging.basicConfig(
 
 _LOGGER = logging.getLogger(__name__)
 
-
-
 class DownpourSGD():
-
-    def __init__(self, learning_rate, model):
-        self.learning_rate = learning_rate
-        self.request_frequency = 5 # request every 5 self.runs (including 0)
+    def __init__(self, model):
         self.model = model
         _LOGGER.info("Setting m_parameter")
         self.m_parameter = torch.zeros(squash_model(model).numel() + 1)
@@ -38,8 +36,7 @@ class DownpourSGD():
             _LOGGER.info("Got message")
             self.receive(ACTION_CODES[self.m_parameter[0].item()], self.m_parameter[1:])
 
-def init_sgd():
-    model = Net()
-    server = DownpourSGD(learning_rate=DEFAULT_LEARNING_RATE, model=model)
+def init_sgd(model):
+    server = DownpourSGD(model=model)
     server.run()
 

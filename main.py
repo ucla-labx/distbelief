@@ -27,8 +27,9 @@ def train(args, model, device, train_loader, nb_epoch):
     model.train()
     for epoch in range(nb_epoch):
         for batch_idx, (data, target) in enumerate(train_loader):
-            if batch_idx % 10 == 0:
-                send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
+
+            # send gradient request
+            send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
             data, target = data.to(device), target.to(device)
             output = model(data)
             model.zero_grad()
@@ -39,7 +40,7 @@ def train(args, model, device, train_loader, nb_epoch):
             send_message('GradientUpdate', gradients)
 
             # and this is our internal gradient update
-            set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
+            # set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
 
             if batch_idx % args.log_interval == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
@@ -99,11 +100,10 @@ def main(*args, **kwargs):
 
     model = Net().to(device)
     model.share_memory()
-
     # using threads
     grad_update = threading.Thread(target=train, args=(args, model, device, train_loader, 10))
     grad_update.start()
-    train_thread = threading.Thread(target=init_sgd)
+    train_thread = threading.Thread(target=init_sgd, args=(model,))
     train_thread.start()
 
 def test_server(rank, size):

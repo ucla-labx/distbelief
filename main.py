@@ -40,7 +40,7 @@ def train(args, model, device, train_loader, nb_epoch):
             send_message('GradientUpdate', gradients)
 
             # and this is our internal gradient update
-            # set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
+            set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
 
             if batch_idx % args.log_interval == 0:
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(

@@ -780,3 +780,195 @@ Processing message: ParameterUpdate
 Processing message: ParameterUpdate
 Processing message: ParameterUpdate
 Processing message: ParameterUpdate
+Train Epoch: 0 [45440/60000 (76%)]	Loss: 2.341748
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [46080/60000 (77%)]	Loss: 2.314917
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [46720/60000 (78%)]	Loss: 2.332142
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [47360/60000 (79%)]	Loss: 2.326333
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [48000/60000 (80%)]	Loss: 2.328811
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [48640/60000 (81%)]	Loss: 2.296252
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [49280/60000 (82%)]	Loss: 2.308987
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [49920/60000 (83%)]	Loss: 2.325274
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [50560/60000 (84%)]	Loss: 2.324428
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [51200/60000 (85%)]	Loss: 2.360090
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [51840/60000 (86%)]	Loss: 2.364645
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [52480/60000 (87%)]	Loss: 2.405242
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [53120/60000 (88%)]	Loss: 2.370309
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [53760/60000 (90%)]	Loss: 2.313893
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [54400/60000 (91%)]	Loss: 2.342584
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [55040/60000 (92%)]	Loss: 2.389000
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [55680/60000 (93%)]	Loss: 2.342821
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Train Epoch: 0 [56320/60000 (94%)]	Loss: 2.351679
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate
+Processing message: ParameterUpdate

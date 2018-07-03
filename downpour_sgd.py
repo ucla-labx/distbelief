@@ -2,9 +2,8 @@
 This class listens for a ParameterUpdate from the parameter server and then updates the model accordingly
 """
 
-from utils import Messages, send_message, squash_model, set_params, ACTION_CODES, DEFAULT_LEARNING_RATE
+from utils import send_message, squash_model, set_params, MessageCode
 import torch
-import time
 import logging
 from models.mnist import Net
 import torch.distributed as dist
@@ -22,9 +21,9 @@ class DownpourSGD():
         _LOGGER.info("Setting m_parameter")
         self.m_parameter = torch.zeros(squash_model(model).numel() + 1)
 
-    def receive(self, message, parameter):
-        print("Processing message: {}".format(message))
-        if message == 'ParamaterUpdate':
+    def receive(self, message_code, parameter):
+        _LOGGER.info("Processing message: {}".format(message_code.name))
+        if message_code == MessageCode.ParameterUpdate:
             set_params(self.model, parameter)
 
     def run(self):
@@ -34,7 +33,7 @@ class DownpourSGD():
             _LOGGER.info("Polling for data")
             dist.recv(tensor=self.m_parameter)
             _LOGGER.info("Got message")
-            self.receive(ACTION_CODES[self.m_parameter[0].item()], self.m_parameter[1:])
+            self.receive(MessageCode(self.m_parameter[0].item()), self.m_parameter[1:])
 
 def init_sgd(model):
     server = DownpourSGD(model=model)

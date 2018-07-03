@@ -4,20 +4,7 @@ import os
 import torch
 import torch.distributed as dist
 
-ACTION_CODES = {
-    0: 'ParameterRequest',
-    1: 'GradientUpdate',
-    2: 'ParameterUpdate',
-    3: 'Train',
-}
-CODE_ACTIONS = {
-    'ParameterRequest': 0,
-    'GradientUpdate': 1,
-    'ParameterUpdate': 2,
-    'Train': 3,
-}
-
-DEFAULT_LEARNING_RATE = 0.01
+DEFAULT_LEARNING_RATE = 0.3
 
 def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment. """
@@ -27,18 +14,10 @@ def init_processes(rank, size, fn, backend='tcp'):
     fn(rank, size)
 
 
-class Messages(Enum):
-    ParameterRequest = 'parameter_request'
-    GradientUpdate = 'gradient_update'
-    ParameterUpdate = 'paramater_update'
-    Train = 'train'
-
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
-
-_LOGGER = logging.getLogger(__name__)
+class MessageCode(Enum):
+    ParameterRequest = 0
+    GradientUpdate = 1
+    ParameterUpdate = 2
 
 def squash_model(model, grads=False):
     m_parameter = torch.Tensor([0])
@@ -57,7 +36,7 @@ def set_params(model, parameter_update):
         parameter.data = parameter_update[current_index:current_index+numel].view(size)
         current_index += numel
 
-def send_message(message, payload, dst=0):
-    m_parameter = torch.Tensor([CODE_ACTIONS[message]])
+def send_message(message_code, payload, dst=0):
+    m_parameter = torch.Tensor([message_code.value])
     m_parameter = torch.cat((m_parameter, payload))
     dist.send(tensor=m_parameter, dst=dst)

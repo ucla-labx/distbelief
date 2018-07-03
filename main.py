@@ -18,18 +18,21 @@ from downpour_sgd import DownpourSGD, init_sgd
 import os
 import torch
 import torch.distributed as dist
-from utils import squash_model, set_params, init_processes, send_message, DEFAULT_LEARNING_RATE
+from utils import squash_model, set_params, init_processes, send_message, DEFAULT_LEARNING_RATE, MessageCode
 
 import threading
 
 
 def train(args, model, device, train_loader, nb_epoch):
+    # this sets the initial model parameters
+    send_message(MessageCode.ParameterUpdate, squash_model(model))
     model.train()
     for epoch in range(nb_epoch):
         for batch_idx, (data, target) in enumerate(train_loader):
-
             # send gradient request
-            send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
+            if batch_idx % 10 == 0:
+                send_message(MessageCode.ParameterRequest, torch.zeros(squash_model(model).size()))
+
             data, target = data.to(device), target.to(device)
             output = model(data)
             model.zero_grad()
@@ -37,7 +40,7 @@ def train(args, model, device, train_loader, nb_epoch):
             loss.backward()
             gradients = squash_model(model, grads=True)
             # print(gradients)
-            send_message('GradientUpdate', gradients)
+            send_message(MessageCode.GradientUpdate, gradients)
 
             # and this is our internal gradient update
             set_params(model, squash_model(model) - DEFAULT_LEARNING_RATE * gradients)
@@ -46,6 +49,7 @@ def train(args, model, device, train_loader, nb_epoch):
                 print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.dataset),
                     100. * batch_idx / len(train_loader), loss.item()))
+        print(squash_model(model))
 
 def test(args, model, device, test_loader):
     model.eval()
@@ -99,6 +103,7 @@ def main(*args, **kwargs):
 
 
     model = Net().to(device)
+
     model.share_memory()
     # using threads
     grad_update = threading.Thread(target=train, args=(args, model, device, train_loader, 10))
@@ -106,14 +111,5 @@ def main(*args, **kwargs):
     train_thread = threading.Thread(target=init_sgd, args=(model,))
     train_thread.start()
 
-def test_server(rank, size):
-    model = Net()
-    while True:
-        print("TESTING")
-        send_message('ParameterRequest', torch.zeros(squash_model(model).size()))
-        time.sleep(5)
-
-
 if __name__ == "__main__":
     init_processes(1, 2, main)
-

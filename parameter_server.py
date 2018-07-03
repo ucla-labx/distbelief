@@ -1,13 +1,12 @@
 """
 Parameter server for distbelief
 """
-import gevent
-import os
 import torch
-from utils import Messages, squash_model, ACTION_CODES, CODE_ACTIONS, send_message, init_processes , DEFAULT_LEARNING_RATE
 import torch.distributed as dist
-from models.mnist import Net
 from torch.multiprocessing import Process
+from utils import squash_model, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode
+
+from models.mnist import Net
 
 import logging
 
@@ -31,14 +30,19 @@ class ParameterServer():
         self.learning_rate = learning_rate
         _LOGGER.info("Setting m_parameter")
         self.m_parameter = torch.zeros(squash_model(model).numel() + 1)
-        self.parameter_shard = torch.zeros(squash_model(model).numel())
+        self.parameter_shard = torch.rand(squash_model(model).numel())
 
-    def receive(self, message, parameter):
-        print("Processing message: {}".format(message))
-        if message == 'ParameterRequest':
-            send_message('ParameterUpdate', self.m_parameter[1:], dst=1)    
+    def receive(self, message_code, parameter):
+        _LOGGER.info("Processing message: {}".format(message_code.name))
 
-        elif message == 'GradientUpdate':
+        if message_code == MessageCode.ParameterUpdate:
+            #be sure to clone here
+            self.parameter_shard = parameter.clone()
+
+        elif message_code == MessageCode.ParameterRequest:
+            send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=1)    
+
+        elif message_code == MessageCode.GradientUpdate:
             self.parameter_shard -= self.learning_rate * parameter
 
     def run(self):
@@ -48,7 +52,7 @@ class ParameterServer():
             _LOGGER.info("Polling for data")
             dist.recv(tensor=self.m_parameter)
             _LOGGER.info("Got message")
-            self.receive(ACTION_CODES[self.m_parameter[0].item()], self.m_parameter[1:])
+            self.receive(MessageCode(self.m_parameter[0].item()), self.m_parameter[1:])
 
 def init_server(rank, size):
     model = Net()

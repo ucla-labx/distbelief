@@ -4,7 +4,7 @@ Parameter server for distbelief
 import torch
 import torch.distributed as dist
 from torch.multiprocessing import Process
-from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode
+from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode, MessageListener
 
 from models.mnist import Net
 
@@ -17,7 +17,7 @@ logging.basicConfig(
 
 _LOGGER = logging.getLogger(__name__)
 
-class ParameterServer():
+class ParameterServer(MessageListener):
 
     def __init__(self, learning_rate, model, random_seed=42):
         """__init__
@@ -27,10 +27,10 @@ class ParameterServer():
         :param random_seed:
         """
         _LOGGER.info("Creating ParameterServer with LR: {}".format(learning_rate))
-        self.learning_rate = learning_rate
-        _LOGGER.info("Setting m_parameter")
-        self.m_parameter = torch.zeros(ravel_model_params(model).numel() + 2)
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
+
+        #invoke superclass
+        super().__init__(model)
 
     def receive(self, sender, message_code, parameter):
         _LOGGER.info("Processing message: {} from sender {}".format(message_code.name, sender))
@@ -44,17 +44,6 @@ class ParameterServer():
 
         elif message_code == MessageCode.GradientUpdate:
             self.parameter_shard -= self.learning_rate * parameter
-
-    def run(self):
-        _LOGGER.info("Parameter Server Running!")
-        self.running = True
-        while self.running:
-            _LOGGER.info("Polling for data")
-            dist.recv(tensor=self.m_parameter)
-            _LOGGER.info("Got message")
-            self.receive(int(self.m_parameter[0].item()),
-                         MessageCode(self.m_parameter[1].item()),
-                         self.m_parameter[2:])
 
 def init_server(rank, size):
     model = Net()

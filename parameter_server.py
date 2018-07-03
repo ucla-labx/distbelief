@@ -6,7 +6,7 @@ import torch.distributed as dist
 from torch.multiprocessing import Process
 from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode, MessageListener
 
-from models.mnist import Net
+from model import Net
 
 import logging
 
@@ -20,15 +20,9 @@ _LOGGER = logging.getLogger(__name__)
 class ParameterServer(MessageListener):
 
     def __init__(self, learning_rate, model, random_seed=42):
-        """__init__
-
-        :param learning_rate:
-        :param params: a dict of str -> pytorch tensor that represents the gradients
-        :param random_seed:
-        """
         _LOGGER.info("Creating ParameterServer with LR: {}".format(learning_rate))
+        self.learning_rate = learning_rate
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
-
         #invoke superclass
         super().__init__(model)
 

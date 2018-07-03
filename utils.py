@@ -6,6 +6,13 @@ import torch.distributed as dist
 
 DEFAULT_LEARNING_RATE = 0.3
 
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+_LOGGER = logging.getLogger(__name__)
+
 def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment. """
     os.environ['MASTER_ADDR'] = '127.0.0.1'
@@ -41,7 +48,7 @@ def send_message(message_code, payload, dst=0):
     dist.send(tensor=m_parameter, dst=dst)
 
 
-class MessageListener()
+class MessageListener():
 
     def __init__(self, model):
         """__init__

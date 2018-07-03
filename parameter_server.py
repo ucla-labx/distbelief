@@ -1,13 +1,12 @@
 """
 Parameter server for distbelief
 """
-import gevent
-import os
 import torch
-from utils import Messages, squash_model, ACTION_CODES, CODE_ACTIONS, send_message, init_processes , DEFAULT_LEARNING_RATE
 import torch.distributed as dist
-from models.mnist import Net
 from torch.multiprocessing import Process
+from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode, MessageListener
+
+from model import Net
 
 import logging
 
@@ -18,37 +17,27 @@ logging.basicConfig(
 
 _LOGGER = logging.getLogger(__name__)
 
-class ParameterServer():
+class ParameterServer(MessageListener):
 
     def __init__(self, learning_rate, model, random_seed=42):
-        """__init__
-
-        :param learning_rate:
-        :param params: a dict of str -> pytorch tensor that represents the gradients
-        :param random_seed:
-        """
         _LOGGER.info("Creating ParameterServer with LR: {}".format(learning_rate))
         self.learning_rate = learning_rate
-        _LOGGER.info("Setting m_parameter")
-        self.m_parameter = torch.zeros(squash_model(model).numel() + 1)
-        self.parameter_shard = torch.zeros(squash_model(model).numel())
+        self.parameter_shard = torch.rand(ravel_model_params(model).numel())
+        #invoke superclass
+        super().__init__(model)
 
-    def receive(self, message, parameter):
-        print("Processing message: {}".format(message))
-        if message == 'ParameterRequest':
-            send_message('ParameterUpdate', self.m_parameter[1:], dst=1)    
+    def receive(self, sender, message_code, parameter):
+        _LOGGER.info("Processing message: {} from sender {}".format(message_code.name, sender))
 
-        elif message == 'GradientUpdate':
+        if message_code == MessageCode.ParameterUpdate:
+            #be sure to clone here
+            self.parameter_shard = parameter.clone()
+
+        elif message_code == MessageCode.ParameterRequest:
+            send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=sender)    
+
+        elif message_code == MessageCode.GradientUpdate:
             self.parameter_shard -= self.learning_rate * parameter
-
-    def run(self):
-        _LOGGER.info("Parameter Server Running!")
-        self.running = True
-        while self.running:
-            _LOGGER.info("Polling for data")
-            dist.recv(tensor=self.m_parameter)
-            _LOGGER.info("Got message")
-            self.receive(ACTION_CODES[self.m_parameter[0].item()], self.m_parameter[1:])
 
 def init_server(rank, size):
     model = Net()
@@ -56,6 +45,6 @@ def init_server(rank, size):
     server.run()
 
 if __name__ == "__main__":
-     p = Process(target = init_processes, args=(0, 2, init_server))
+     p = Process(target=init_processes, args=(0, 3, init_server))
      p.start()
      p.join()

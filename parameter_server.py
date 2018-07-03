@@ -4,7 +4,7 @@ Parameter server for distbelief
 import torch
 import torch.distributed as dist
 from torch.multiprocessing import Process
-from utils import squash_model, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode
+from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode
 
 from models.mnist import Net
 
@@ -29,18 +29,18 @@ class ParameterServer():
         _LOGGER.info("Creating ParameterServer with LR: {}".format(learning_rate))
         self.learning_rate = learning_rate
         _LOGGER.info("Setting m_parameter")
-        self.m_parameter = torch.zeros(squash_model(model).numel() + 1)
-        self.parameter_shard = torch.rand(squash_model(model).numel())
+        self.m_parameter = torch.zeros(ravel_model_params(model).numel() + 2)
+        self.parameter_shard = torch.rand(ravel_model_params(model).numel())
 
-    def receive(self, message_code, parameter):
-        _LOGGER.info("Processing message: {}".format(message_code.name))
+    def receive(self, sender, message_code, parameter):
+        _LOGGER.info("Processing message: {} from sender {}".format(message_code.name, sender))
 
         if message_code == MessageCode.ParameterUpdate:
             #be sure to clone here
             self.parameter_shard = parameter.clone()
 
         elif message_code == MessageCode.ParameterRequest:
-            send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=1)    
+            send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=sender)    
 
         elif message_code == MessageCode.GradientUpdate:
             self.parameter_shard -= self.learning_rate * parameter
@@ -52,7 +52,9 @@ class ParameterServer():
             _LOGGER.info("Polling for data")
             dist.recv(tensor=self.m_parameter)
             _LOGGER.info("Got message")
-            self.receive(MessageCode(self.m_parameter[0].item()), self.m_parameter[1:])
+            self.receive(int(self.m_parameter[0].item()),
+                         MessageCode(self.m_parameter[1].item()),
+                         self.m_parameter[2:])
 
 def init_server(rank, size):
     model = Net()
@@ -60,6 +62,6 @@ def init_server(rank, size):
     server.run()
 
 if __name__ == "__main__":
-     p = Process(target = init_processes, args=(0, 2, init_server))
+     p = Process(target=init_processes, args=(0, 3, init_server))
      p.start()
      p.join()

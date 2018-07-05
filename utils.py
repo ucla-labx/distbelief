@@ -47,7 +47,7 @@ def unravel_model_params(model, parameter_update):
     NOTE: this function manipulates model.parameters.
     """
     current_index = 0 # keep track of where to read from parameter_update
-    for parameter in list(model.parameters()):
+    for parameter in model.parameters():
         numel = parameter.data.numel()
         size = parameter.data.size()
         parameter.data = parameter_update[current_index:current_index+numel].view(size)
@@ -63,7 +63,6 @@ def send_message(message_code, payload, dst=0):
 
 
 class MessageListener():
-
     def __init__(self, model):
         """__init__
 

@@ -23,7 +23,7 @@ class ParameterServer(MessageListener):
         _LOGGER.info("Creating ParameterServer with LR: {}".format(learning_rate))
         self.learning_rate = learning_rate
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
-        #invoke superclass
+        #init superclass
         super().__init__(model)
 
     def receive(self, sender, message_code, parameter):

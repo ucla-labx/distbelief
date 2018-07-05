@@ -8,6 +8,9 @@ _LOGGER = logging.getLogger(__name__)
 
 class DownpourSGD(MessageListener):
 	"""Client code for interacting with server. Training clients should run an instance of this class in a separate thread."""
+	def __init__(self, model):
+		super().__init__(model)
+
 	def receive(self, sender, message_code, parameter):
 		"""receive parameter updates from the server and reflect them into the client's model."""
 		_LOGGER.info("Processing message: {}".format(message_code.name))

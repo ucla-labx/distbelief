@@ -24,9 +24,9 @@ import threading
 
 
 def train(args, model, device, train_loader, epoch):
-    model.train()
+    model.train() # pytorch indication that the model is in training mode
     for batch_idx, (data, target) in enumerate(train_loader):
-        # send gradient request
+        # send gradient request every 10 iterations
         if batch_idx % 10 == 0:
             send_message(MessageCode.ParameterRequest, torch.zeros(ravel_model_params(model).size()))
 
@@ -36,8 +36,7 @@ def train(args, model, device, train_loader, epoch):
         loss = F.nll_loss(output, target)
         loss.backward()
         gradients = ravel_model_params(model, grads=True)
-        # print(gradients)
-        send_message(MessageCode.GradientUpdate, gradients)
+        send_message(MessageCode.GradientUpdate, gradients) # send gradients to the server
 
         # and this is our internal gradient update
         unravel_model_params(model, ravel_model_params(model) - DEFAULT_LEARNING_RATE * gradients)
@@ -48,7 +47,7 @@ def train(args, model, device, train_loader, epoch):
                 100. * batch_idx / len(train_loader), loss.item()))
 
 def test(args, model, device, test_loader):
-    model.eval()
+    model.eval() # pytorch indication that the model is in testing mode
     test_loss = 0
     correct = 0
     with torch.no_grad():
@@ -104,7 +103,7 @@ def main(*args, **kwargs):
     model.share_memory()
     # this sets the initial model parameters
     send_message(MessageCode.ParameterUpdate, ravel_model_params(model))
-    # start the thread
+    # start the  training thread
     update_thread = threading.Thread(target=init_sgd, args=(model,))
     update_thread.start()
 

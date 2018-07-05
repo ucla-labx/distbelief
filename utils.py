@@ -14,18 +14,24 @@ logging.basicConfig(
 _LOGGER = logging.getLogger(__name__)
 
 def init_processes(rank, size, fn, backend='tcp'):
-    """ Initialize the distributed environment. """
+    """ Initialize the distributed environment.
+    Server and clients must call this as an entry point.
+    """
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = '29500'
     dist.init_process_group(backend, rank=rank, world_size=size)
     fn(rank, size)
 
 class MessageCode(Enum):
+    """Different types of messages between client and server that we support go here."""
     ParameterRequest = 0
     GradientUpdate = 1
     ParameterUpdate = 2
 
 def ravel_model_params(model, grads=False):
+    """
+    Squash model parameters or gradients into a single tensor.
+    """
     m_parameter = torch.Tensor([0])
     for parameter in list(model.parameters()):
         if grads:
@@ -35,7 +41,12 @@ def ravel_model_params(model, grads=False):
     return m_parameter[1:]
 
 def unravel_model_params(model, parameter_update):
-    current_index = 0
+    """
+    Assigns parameter_update params to model.parameters.
+    This is done by iterating through model.parameters() and assigning the relevant params in parameter_update.
+    NOTE: this function manipulates model.parameters.
+    """
+    current_index = 0 # keep track of where to read from parameter_update
     for parameter in list(model.parameters()):
         numel = parameter.data.numel()
         size = parameter.data.size()
@@ -43,6 +54,9 @@ def unravel_model_params(model, parameter_update):
         current_index += numel
 
 def send_message(message_code, payload, dst=0):
+    """Sends a message to a destination
+    Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
+    """
     m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
     m_parameter = torch.cat((m_parameter, payload))
     dist.send(tensor=m_parameter, dst=dst)

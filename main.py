@@ -27,6 +27,7 @@ log_dataframe = []
 
 def train(args, model, device, train_loader, test_loader, epoch):
     model.train() # pytorch indication that the model is in training mode
+    accumulated_gradients = torch.zeros(ravel_model_params(model).size())
     for batch_idx, (data, target) in enumerate(train_loader):
         # send gradient request every 10 iterations
         if batch_idx % 10 == 0:
@@ -38,7 +39,9 @@ def train(args, model, device, train_loader, test_loader, epoch):
         loss = F.nll_loss(output, target)
         loss.backward()
         gradients = ravel_model_params(model, grads=True)
-        send_message(MessageCode.GradientUpdate, gradients) # send gradients to the server
+        accumulated_gradients += gradients
+        if batch_idx % 10 == 0:
+            send_message(MessageCode.GradientUpdate, accumulated_gradients) # send gradients to the server
 
         # and this is our internal gradient update
         unravel_model_params(model, ravel_model_params(model) - DEFAULT_LEARNING_RATE * gradients)

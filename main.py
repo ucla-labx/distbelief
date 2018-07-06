@@ -123,8 +123,11 @@ def main(*args, **kwargs):
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, test_loader, epoch)
 
+    empty_message = torch.zeros(ravel_model_params(model).size())
     if dist.get_rank() == 1:
-        evaluate(log_dataframe)
+        send_message(MessageCode.EvaluateParams, empty_message)
+
+    evaluate(log_dataframe)
 
 if __name__ == "__main__":
     init_processes(1, 3, main)

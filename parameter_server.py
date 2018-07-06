@@ -8,7 +8,7 @@ from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEAR
 
 from torchvision import datasets, transforms
 from model import Net
-from experimental import parameter_server_test
+from experimental import parameter_server_test, evaluate
 
 import logging
 

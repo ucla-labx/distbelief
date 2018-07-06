@@ -20,7 +20,7 @@ def parameter_server_test(model, log_df):
 
 def evaluate(logging_data):
     for i, row in enumerate(logging_data):
-        row['iteration'] = i
+        row['iteration'] = i*10
     df = pd.DataFrame(logging_data)
     df.plot.line(x='iteration')
     plt.title('iteration v loss/acc rank {}'.format(dist.get_rank()))

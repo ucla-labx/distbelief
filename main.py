@@ -48,7 +48,7 @@ def train(args, model, device, train_loader, test_loader, epoch):
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
 
-        test(model, device, test_loader, log_dataframe)
+            test(model, device, test_loader, log_dataframe)
 
 def test(model, device, test_loader, dataframe):
     model.eval() # pytorch indication that the model is in testing mode

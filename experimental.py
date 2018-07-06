@@ -24,5 +24,5 @@ def evaluate(logging_data):
     df = pd.DataFrame(logging_data)
     df.plot.line(x='iteration')
     plt.title('iteration v loss/acc rank {}'.format(dist.get_rank()))
-    plt.savefig('process_{}.png'.format(get_rank()))
+    plt.savefig('process_{}.png'.format(dist.get_rank()))
         

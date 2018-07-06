@@ -30,7 +30,7 @@ def train(args, model, device, train_loader, test_loader, epoch):
     accumulated_gradients = torch.zeros(ravel_model_params(model).size())
     for batch_idx, (data, target) in enumerate(train_loader):
         # send gradient request every 10 iterations
-        if batch_idx % 10 == 0:
+        if batch_idx % 15 == 0:
             send_message(MessageCode.ParameterRequest, torch.zeros(ravel_model_params(model).size()))
 
         data, target = data.to(device), target.to(device)
@@ -40,7 +40,7 @@ def train(args, model, device, train_loader, test_loader, epoch):
         loss.backward()
         gradients = ravel_model_params(model, grads=True)
         accumulated_gradients += gradients
-        if batch_idx % 10 == 0:
+        if batch_idx % 15 == 0:
             send_message(MessageCode.GradientUpdate, accumulated_gradients) # send gradients to the server
             accumulated_gradients = torch.zeros(ravel_model_params(model).size())
 

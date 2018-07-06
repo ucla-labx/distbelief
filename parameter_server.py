@@ -44,9 +44,8 @@ class ParameterServer(MessageListener):
         elif message_code == MessageCode.GradientUpdate:
             self.idx += 1
             self.parameter_shard -= self.learning_rate * parameter
-            if self.idx % 10 == 0:
-                unravel_model_params(self.model, self.parameter_shard)
-                parameter_server_test(self.model, self.log_dataframe)
+            unravel_model_params(self.model, self.parameter_shard)
+            parameter_server_test(self.model, self.log_dataframe)
 
         elif message_code == MessageCode.EvaluateParams:
             evaluate(self.log_dataframe)

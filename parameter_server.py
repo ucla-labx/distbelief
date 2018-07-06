@@ -48,7 +48,7 @@ class ParameterServer(MessageListener):
                 unravel_model_params(self.model, self.parameter_shard)
                 parameter_server_test(self.model, self.log_dataframe)
 
-        elif message_code == Messagecode.EvaluateParams:
+        elif message_code == MessageCode.EvaluateParams:
             evaluate(self.log_dataframe)
     
 

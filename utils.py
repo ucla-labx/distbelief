@@ -60,7 +60,7 @@ def send_message(message_code, payload, dst=0):
     """
     m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
     m_parameter = torch.cat((m_parameter, payload))
-    dist.send(tensor=m_parameter, dst=dst)
+    dist.isend(tensor=m_parameter, dst=dst)
 
 
 class MessageListener():

@@ -42,6 +42,7 @@ def train(args, model, device, train_loader, test_loader, epoch):
         accumulated_gradients += gradients
         if batch_idx % 10 == 0:
             send_message(MessageCode.GradientUpdate, accumulated_gradients) # send gradients to the server
+            accumulated_gradients = torch.zeros(ravel_model_params(model).size())
 
         # and this is our internal gradient update
         unravel_model_params(model, ravel_model_params(model) - DEFAULT_LEARNING_RATE * gradients)

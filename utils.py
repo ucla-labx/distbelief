@@ -27,6 +27,7 @@ class MessageCode(Enum):
     ParameterRequest = 0
     GradientUpdate = 1
     ParameterUpdate = 2
+    EvaluateParams = 3
 
 def ravel_model_params(model, grads=False):
     """

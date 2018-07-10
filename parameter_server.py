@@ -27,7 +27,6 @@ class ParameterServer(MessageListener):
         self.model = model
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
         self.log_dataframe = []
-        self.idx = 0
         #init superclass
         super().__init__(model)
 
@@ -42,10 +41,8 @@ class ParameterServer(MessageListener):
             send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=sender)    
 
         elif message_code == MessageCode.GradientUpdate:
-            self.idx += 1
             self.parameter_shard -= self.learning_rate * parameter
             unravel_model_params(self.model, self.parameter_shard)
-            parameter_server_test(self.model, self.log_dataframe)
 
         elif message_code == MessageCode.EvaluateParams:
             evaluate(self.log_dataframe)

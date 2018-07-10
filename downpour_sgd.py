@@ -18,9 +18,9 @@ class DownpourListener(MessageListener):
     def receive(self, sender, message_code, parameter):
             """receive parameter updates from the server and reflect them into the client's model."""
             _LOGGER.info("Processing message: {}".format(message_code.name))
-            if message_code == MessageCode.ParameterUpdate:
-                    unravel_model_params(self.model, parameter)
 
+            if message_code == MessageCode.ParameterUpdate:
+                unravel_model_params(self.model, parameter)
 
 class DownpourSGD(Optimizer):
     def __init__(self, params, lr=required, freq=required, model=required):
@@ -44,9 +44,9 @@ class DownpourSGD(Optimizer):
 
     @staticmethod
     def listen(model):
-            """Init and run the sgd client"""
-            sgd_client = DownpourListener(model=model)
-            sgd_client.run()
+        """Init and run the sgd client"""
+        sgd_client = DownpourListener(model=model)
+        sgd_client.run()
 
 
     def step(self, closure=None):

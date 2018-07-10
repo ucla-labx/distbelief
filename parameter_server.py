@@ -23,7 +23,6 @@ class ParameterServer(MessageListener):
     def __init__(self, learning_rate, model, random_seed=42):
         _LOGGER.info("Creating ParameterServer with LR: {}".format(learning_rate))
         self.learning_rate = learning_rate
-        self.model = model
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
         self.log_dataframe = []
         #init superclass
@@ -41,11 +40,10 @@ class ParameterServer(MessageListener):
 
         elif message_code == MessageCode.GradientUpdate:
             self.parameter_shard -= self.learning_rate * parameter
-            unravel_model_params(self.model, self.parameter_shard)
 
 def init_server():
     model = Net()
-    server = ParameterServer(learning_rate=0.01, model=model)
+    server = ParameterServer(learning_rate=0.001, model=model)
     server.run()
 
 if __name__ == "__main__":

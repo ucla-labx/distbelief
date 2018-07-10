@@ -12,18 +12,19 @@ from downpour_sgd import DownpourSGD
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.conv1 = nn.Conv2d(3, 6, kernel_size=5)
+        self.conv2 = nn.Conv2d(6, 16, kernel_size=5)
+        self.conv2_drop = nn.Dropout2d()
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(F.max_pool2d(self.conv1(x), 2))
+        x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
+        x = x.view(-1, 16* 5* 5)
         x = F.relu(self.fc1(x))
+        x = F.dropout(x, training=self.training)
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
@@ -55,12 +56,12 @@ def main():
     images, labels = dataiter.next()
 
     net = Net()
-    net.share_memory()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
+    optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=100, model=net)
     # optimizer = optim.SGD(net.parameters(), lr=0.001)
 
+    net.train()
     for epoch in range(10):  # loop over the dataset multiple times
 
         running_loss = 0.0
@@ -77,16 +78,17 @@ def main():
             loss.backward()
             optimizer.step()
 
+
             # print statistics
             running_loss += loss.item()
             if i % 25 == 0:    # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
+                      (epoch + 1, i + 1, running_loss / 25))
                 running_loss = 0.0
 
     print('Finished Training')
 
-
+    net.eval()
     dataiter = iter(testloader)
     images, labels = dataiter.next()
 

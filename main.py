@@ -1,6 +1,13 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import numpy as np
+import torch.nn as nn
+import torch.nn.functional as F
+
+import torch.optim as optim
+from downpour_sgd import DownpourSGD
 
 class Net(nn.Module):
     def __init__(self):
@@ -21,9 +28,6 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-
-
-
 def main():
     transform = transforms.Compose(
         [transforms.ToTensor(),
@@ -42,39 +46,20 @@ def main():
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-
     def imshow(img):
         img = img / 2 + 0.5     # unnormalize
         npimg = img.numpy()
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
 
-
-    # get some random training images
     dataiter = iter(trainloader)
     images, labels = dataiter.next()
 
-    # show images
-    imshow(torchvision.utils.make_grid(images))
-    # print labels
-    print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
-    import torch.nn as nn
-    import torch.nn.functional as F
-
-
     net = Net()
-
-    import torch.optim as optim
-    from downpour_sgd import DownpourSGD
+    net.share_memory()
 
     criterion = nn.CrossEntropyLoss()
-    # optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=15, model=model)
-    optimizer = optim.SGD(net.parameters(), lr=0.001)
-
+    optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
+    # optimizer = optim.SGD(net.parameters(), lr=0.001)
 
     for epoch in range(10):  # loop over the dataset multiple times
 
@@ -94,7 +79,7 @@ def main():
 
             # print statistics
             running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
+            if i % 25 == 0:    # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch + 1, i + 1, running_loss / 2000))
                 running_loss = 0.0
@@ -147,3 +132,6 @@ def main():
     for i in range(10):
         print('Accuracy of %5s : %2d %%' % (
             classes[i], 100 * class_correct[i] / class_total[i]))
+
+if __name__ == '__main__':
+    main()

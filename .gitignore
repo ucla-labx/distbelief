@@ -1,6 +1,6 @@
 data
 __pycache__/
-venv/
+distbelief/
 .pyc*
 train.log
 env/

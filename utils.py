@@ -4,7 +4,7 @@ import os
 import torch
 import torch.distributed as dist
 
-DEFAULT_LEARNING_RATE = 0.3
+DEFAULT_LEARNING_RATE = 0.1
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -17,7 +17,7 @@ def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment.
     Server and clients must call this as an entry point.
     """
-    os.environ['MASTER_ADDR'] = '127.0.0.1'
+    os.environ['MASTER_ADDR'] = '192.168.1.3'
     os.environ['MASTER_PORT'] = '29500'
     dist.init_process_group(backend, rank=rank, world_size=size)
     fn(rank, size)
@@ -27,6 +27,7 @@ class MessageCode(Enum):
     ParameterRequest = 0
     GradientUpdate = 1
     ParameterUpdate = 2
+    EvaluateParams = 3
 
 def ravel_model_params(model, grads=False):
     """
@@ -59,7 +60,7 @@ def send_message(message_code, payload, dst=0):
     """
     m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
     m_parameter = torch.cat((m_parameter, payload))
-    dist.send(tensor=m_parameter, dst=dst)
+    dist.isend(tensor=m_parameter, dst=dst)
 
 
 class MessageListener():

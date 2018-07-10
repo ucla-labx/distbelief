@@ -23,8 +23,6 @@ class DownpourListener(MessageListener):
 
 
 class DownpourSGD(Optimizer):
-    @staticmethod
-
     def __init__(self, params, lr=required, freq=required, model=required):
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -33,14 +31,18 @@ class DownpourSGD(Optimizer):
         self.accumulated_gradients = torch.zeros(ravel_model_params(model).size())
         self.freq = freq
 
-        model.share_memory()
+        self.model = model
+        self.model.share_memory()
         # this sets the initial model parameters
-        send_message(MessageCode.ParameterUpdate, ravel_model_params(model))
+        send_message(MessageCode.ParameterUpdate, ravel_model_params(self.model))
         # start the  training thread
-        update_thread = threading.Thread(target=self.listen, args=(model,))
+        update_thread = threading.Thread(target=self.listen, args=(self.model,))
         update_thread.start()
+        self.idx = 0
 
         super(DownpourSGD, self).__init__(params, defaults)
+
+    @staticmethod
     def listen(model):
             """Init and run the sgd client"""
             sgd_client = DownpourListener(model=model)
@@ -59,15 +61,15 @@ class DownpourSGD(Optimizer):
             loss = closure()
         
         # send gradient request every 10 iterations
-        if batch_idx % self.freq == 0:
+        if self.idx % self.freq == 0:
             send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val 
 
-        gradients = ravel_model_params(model, grads=True)
-        accumulated_gradients += gradients
+        gradients = ravel_model_params(self.model, grads=True)
+        self.accumulated_gradients += gradients
 
-        if batch_idx % self.freq == 0:
+        if self.idx % self.freq == 0:
             send_message(MessageCode.GradientUpdate, self.accumulated_gradients) # send gradients to the server
-            accumulated_gradients = torch.zeros(self.accumulated_gradients.size())
+            self.accumulated_gradients = torch.zeros(self.accumulated_gradients.size())
 
         # internal sgd update
         for group in self.param_groups:
@@ -76,6 +78,7 @@ class DownpourSGD(Optimizer):
                     continue
                 d_p = p.grad.data
                 p.data.add_(-group['lr'], d_p)
-
+        
+        self.idx += 1
         return loss
 

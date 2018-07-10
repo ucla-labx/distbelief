@@ -4,11 +4,10 @@ Parameter server for distbelief
 import torch
 import torch.distributed as dist
 from torch.multiprocessing import Process
-from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode, MessageListener, unravel_model_params
+from utils import ravel_model_params, send_message, init_processes, MessageCode, MessageListener, unravel_model_params
 
 from torchvision import datasets, transforms
 from main import Net
-from experimental import parameter_server_test, evaluate
 
 import logging
 
@@ -44,13 +43,9 @@ class ParameterServer(MessageListener):
             self.parameter_shard -= self.learning_rate * parameter
             unravel_model_params(self.model, self.parameter_shard)
 
-        elif message_code == MessageCode.EvaluateParams:
-            evaluate(self.log_dataframe)
-    
-
 def init_server():
     model = Net()
-    server = ParameterServer(learning_rate=DEFAULT_LEARNING_RATE, model=model)
+    server = ParameterServer(learning_rate=0.01, model=model)
     server.run()
 
 if __name__ == "__main__":

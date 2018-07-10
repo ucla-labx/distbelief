@@ -4,8 +4,6 @@ import os
 import torch
 import torch.distributed as dist
 
-DEFAULT_LEARNING_RATE = 0.1
-
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
     level=logging.INFO,

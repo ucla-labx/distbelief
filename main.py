@@ -101,7 +101,8 @@ def main():
 
 
     model = Net().to(device)
-    optimizer = DownpourSGD(model.parameters(), lr=args.lr, model=model)
+
+    optimizer = DownpourSGD(model.parameters(), lr=args.lr, freq=15, model=model)
 
     for epoch in range(1, args.epochs + 1):
         train(args, model, device, train_loader, optimizer, epoch)

@@ -5,6 +5,7 @@ import logging
 import threading 
 from utils import ravel_model_params, unravel_model_params, MessageCode, MessageListener, send_message, init_processes
 
+import torch
 from torch.optim.optimizer import Optimizer, required
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,8 +23,9 @@ class DownpourListener(MessageListener):
 
 
 class DownpourSGD(Optimizer):
+    @staticmethod
 
-    def __init__(self, params, lr=required, freq=15, model=required):
+    def __init__(self, params, lr=required, freq=required, model=required):
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
 
@@ -35,16 +37,15 @@ class DownpourSGD(Optimizer):
         # this sets the initial model parameters
         send_message(MessageCode.ParameterUpdate, ravel_model_params(model))
         # start the  training thread
-        update_thread = threading.Thread(target=listen, args=(model,))
+        update_thread = threading.Thread(target=self.listen, args=(model,))
         update_thread.start()
 
         super(DownpourSGD, self).__init__(params, defaults)
-
-    @staticmethod
     def listen(model):
             """Init and run the sgd client"""
             sgd_client = DownpourListener(model=model)
             sgd_client.run()
+
 
     def step(self, closure=None):
         """Performs a single optimization step.
@@ -59,14 +60,14 @@ class DownpourSGD(Optimizer):
         
         # send gradient request every 10 iterations
         if batch_idx % self.freq == 0:
-            send_message(MessageCode.ParameterRequest, torch.zeros(ravel_model_params(model).size()))
+            send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val 
 
         gradients = ravel_model_params(model, grads=True)
         accumulated_gradients += gradients
 
         if batch_idx % self.freq == 0:
-            send_message(MessageCode.GradientUpdate, accumulated_gradients) # send gradients to the server
-            accumulated_gradients = torch.zeros(ravel_model_params(model).size())
+            send_message(MessageCode.GradientUpdate, self.accumulated_gradients) # send gradients to the server
+            accumulated_gradients = torch.zeros(self.accumulated_gradients.size())
 
         # internal sgd update
         for group in self.param_groups:

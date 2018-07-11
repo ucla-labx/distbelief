@@ -49,7 +49,7 @@ def unravel_model_params(model, parameter_update):
     for parameter in model.parameters():
         numel = parameter.data.numel()
         size = parameter.data.size()
-        parameter.data = parameter_update[current_index:current_index+numel].view(size)
+        parameter.data.copy_(parameter_update[current_index:current_index+numel].view(size))
         current_index += numel
 
 def send_message(message_code, payload, dst=0):

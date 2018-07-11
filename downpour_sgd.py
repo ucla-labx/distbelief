@@ -18,7 +18,6 @@ class DownpourListener(MessageListener):
     def receive(self, sender, message_code, parameter):
             """receive parameter updates from the server and reflect them into the client's model."""
             _LOGGER.info("Processing message: {}".format(message_code.name))
-
             if message_code == MessageCode.ParameterUpdate:
                 unravel_model_params(self.model, parameter)
 

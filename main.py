@@ -8,6 +8,7 @@ import torch.nn.functional as F
 
 import torch.optim as optim
 from downpour_sgd import DownpourSGD
+import threading
 
 class Net(nn.Module):
     def __init__(self):
@@ -58,7 +59,7 @@ def main():
     net = Net()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=100, model=net)
+    optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
     # optimizer = optim.SGD(net.parameters(), lr=0.001)
 
     net.train()
@@ -71,13 +72,12 @@ def main():
 
             # zero the parameter gradients
             optimizer.zero_grad()
-
+            
             # forward + backward + optimize
             outputs = net(inputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-
 
             # print statistics
             running_loss += loss.item()

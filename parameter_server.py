@@ -4,11 +4,10 @@ Parameter server for distbelief
 import torch
 import torch.distributed as dist
 from torch.multiprocessing import Process
-from utils import ravel_model_params, send_message, init_processes, DEFAULT_LEARNING_RATE, MessageCode, MessageListener, unravel_model_params
+from utils import ravel_model_params, send_message, init_processes, MessageCode, MessageListener, unravel_model_params
 
 from torchvision import datasets, transforms
-from model import Net
-from experimental import parameter_server_test, evaluate
+from main import Net
 
 import logging
 
@@ -24,10 +23,8 @@ class ParameterServer(MessageListener):
     def __init__(self, learning_rate, model, random_seed=42):
         _LOGGER.info("Creating ParameterServer with LR: {}".format(learning_rate))
         self.learning_rate = learning_rate
-        self.model = model
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
         self.log_dataframe = []
-        self.idx = 0
         #init superclass
         super().__init__(model)
 
@@ -42,21 +39,12 @@ class ParameterServer(MessageListener):
             send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=sender)    
 
         elif message_code == MessageCode.GradientUpdate:
-            self.idx += 1
             self.parameter_shard -= self.learning_rate * parameter
-            unravel_model_params(self.model, self.parameter_shard)
-            parameter_server_test(self.model, self.log_dataframe)
 
-        elif message_code == MessageCode.EvaluateParams:
-            evaluate(self.log_dataframe)
-    
-
-def init_server(rank, size):
+def init_server():
     model = Net()
-    server = ParameterServer(learning_rate=DEFAULT_LEARNING_RATE, model=model)
+    server = ParameterServer(learning_rate=0.001, model=model)
     server.run()
 
 if __name__ == "__main__":
-     p = Process(target=init_processes, args=(0, 3, init_server))
-     p.start()
-     p.join()
+     init_processes(0, 3, init_server)

@@ -1,3 +1,16 @@
+from enum import Enum
+from threading import Thread
+import logging
+import torch
+import torch.distributed as dist
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+_LOGGER = logging.getLogger(__name__)
+
 class MessageCode(Enum):
     """Different types of messages between client and server that we support go here."""
     ParameterRequest = 0
@@ -5,16 +18,11 @@ class MessageCode(Enum):
     ParameterUpdate = 2
     EvaluateParams = 3
 
-def send_message(message_code, payload, dst=0):
-    """Sends a message to a destination
-    Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
+class MessageListener(Thread):
+    """MessageListener
+   
+    base class for message listeners, extends pythons threading Thread
     """
-    m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
-    m_parameter = torch.cat((m_parameter, payload))
-    dist.isend(tensor=m_parameter, dst=dst)
-
-
-class MessageListener():
     def __init__(self, model):
         """__init__
 
@@ -23,8 +31,15 @@ class MessageListener():
         self.model = model
         _LOGGER.info("Setting m_parameter")
         self.m_parameter = torch.zeros(ravel_model_params(model).numel() + 2)
+        super(MessageListener, self).__init__()
 
     def receive(self, sender, message_code, parameter):
+        """receive
+
+        :param sender: rank id of the sender
+        :param message_code: Enum code 
+        :param parameter: the data payload
+        """
         raise NotImplementedError()
 
     def run(self):
@@ -37,3 +52,12 @@ class MessageListener():
             self.receive(int(self.m_parameter[0].item()),
                          MessageCode(self.m_parameter[1].item()),
                          self.m_parameter[2:])
+
+def send_message(message_code, payload, dst=0):
+    """Sends a message to a destination
+    Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
+    """
+    m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
+    m_parameter = torch.cat((m_parameter, payload))
+    dist.isend(tensor=m_parameter, dst=dst)
+

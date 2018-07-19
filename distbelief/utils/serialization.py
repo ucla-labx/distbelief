@@ -1,3 +1,4 @@
+import torch
 
 def ravel_model_params(model, grads=False):
     """

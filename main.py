@@ -9,6 +9,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from downpour_sgd import DownpourSGD
 import threading
+import argparse
 
 class Net(nn.Module):
     def __init__(self):
@@ -30,12 +31,40 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-def main():
+def main(*args, **kwargs):
+    parser = argparse.ArgumentParser(description='Distbelief training example')
+    parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='input batch size for training (default: 64)')
+    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N', help='input batch size for testing (default: 1000)')
+    parser.add_argument('--epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
+    parser.add_argument('--lr', type=float, default=0.01, metavar='LR', help='learning rate (default: 0.01)')
+    parser.add_argument('--momentum', type=float, default=0.5, metavar='M', help='SGD momentum (default: 0.5)')
+    parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training')
+    parser.add_argument('--seed', type=int, default=1, metavar='S', help='random seed (default: 1)')
+    parser.add_argument('--log-interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
+    parser.add_argument('--dataset', type=str, default='MNIST', help='Dataset to train with (CIFAR or MNIST)')
+    args = parser.parse_args()
+
+    # if args.dataset == 'MNIST':
+    #     trainloader = torch.utils.data.DataLoader(
+    #     torchvision.datasets.MNIST('../data', train=True, download=True,
+    #                    transform=transforms.Compose([
+    #                        transforms.ToTensor(),
+    #                        transforms.Normalize((0.1307,), (0.3081,))
+    #                    ])),
+    #     batch_size=args.batch_size, shuffle=True, **kwargs)
+    #     testloader = torch.utils.data.DataLoader(
+    #         torchvision.datasets.MNIST('../data', train=False, transform=transforms.Compose([
+    #                            transforms.ToTensor(),
+    #                            transforms.Normalize((0.1307,), (0.3081,))
+    #                        ])),
+    #         batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+    # TODO: distinguishing between MNIST and CIFAR for experimentation
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    trainset = torchvision.datasets.CIFAR10(root='../data', train=True,
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
                                             download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
                                               shuffle=True, num_workers=2)
@@ -47,6 +76,7 @@ def main():
 
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
 
     def imshow(img):
         img = img / 2 + 0.5     # unnormalize
@@ -86,6 +116,9 @@ def main():
                       (epoch + 1, i + 1, running_loss / 25))
                 running_loss = 0.0
 
+    # ensure that all of the updates from the parameter server have been received
+    update_thread = optimizer.get_update_thread()
+    update_thread.join()
     print('Finished Training')
 
     net.eval()

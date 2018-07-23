@@ -4,7 +4,8 @@ Parameter server for distbelief
 import torch
 import torch.distributed as dist
 from torch.multiprocessing import Process
-from utils import ravel_model_params, send_message, init_processes, MessageCode, MessageListener, unravel_model_params
+from utils import ravel_model_params, send_message, init_processes, MessageCode, unravel_model_params
+from base_listener import MessageListener
 
 from torchvision import datasets, transforms
 from main import Net

@@ -4,4 +4,5 @@ __pycache__/
 train.log
 env/
 venv/
+*.pyc
 

@@ -11,7 +11,7 @@ from distbelief.optim import DownpourSGD
 
 optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
 
-``
+```
 
 As an example, you can see our implementation running by opening three seperate terminal windows and running `make server`, `make first` and `make second`, which will train a CNN on CIFAR10.
 

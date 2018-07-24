@@ -1,9 +1,10 @@
 from distbelief.server import ParameterServer
+from distbelief.utils import init_processes
 from main import Net
 
 def init_server():
     model = Net()
-    server = ParameterServer(learning_rate=0.001, model=model)
+    server = ParameterServer(model=model)
     server.start()
 
 if __name__ == "__main__":

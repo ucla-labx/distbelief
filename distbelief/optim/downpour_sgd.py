@@ -1,18 +1,14 @@
-"""
-This class listens for a ParameterUpdate from the parameter server and then updates the model accordingly
-"""
 import logging
-import threading 
-from utils import ravel_model_params, unravel_model_params, MessageCode, send_message, init_processes
-from base_listener import MessageListener
-
 import torch
 from torch.optim.optimizer import Optimizer, required
+
+from distbelief.utils.serialization import ravel_model_params, unravel_model_params
+from distbelief.utils.messaging import MessageCode, MessageListener, send_message
 
 _LOGGER = logging.getLogger(__name__)
 
 class DownpourListener(MessageListener):
-    """Client code for interacting with server. Training clients should run an instance of this class in a separate thread."""
+    """DownpourListener"""
     def __init__(self, model):
             super().__init__(model)
 
@@ -23,12 +19,21 @@ class DownpourListener(MessageListener):
                 unravel_model_params(self.model, parameter)
 
 class DownpourSGD(Optimizer):
-    def __init__(self, params, lr=required, freq=required, model=required, pytorch_opt=None):
-        # pytorch_opt allows support for using another pytorch optimizer for internal gradient update
+    """DownpourSGD"""
+
+    def __init__(self, params, lr=required, freq=required, model=required):
+        """__init__
+
+        :param params:
+        :param lr:
+        :param freq:
+        :param model:
+        """
         if lr is not required and lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
 
         defaults = dict(lr=lr,)
+        self.lr = lr
         self.accumulated_gradients = torch.zeros(ravel_model_params(model).size())
         self.freq = freq
 
@@ -36,22 +41,13 @@ class DownpourSGD(Optimizer):
         self.model.share_memory()
         # this sets the initial model parameters
         send_message(MessageCode.ParameterUpdate, ravel_model_params(self.model))
-        # start the  training thread
-        update_thread = threading.Thread(target=self.listen, args=(self.model,))
+        # start the  listener thread
+        update_thread = DownpourListener(self.model)
         update_thread.start()
         self.idx = 0
 
         super(DownpourSGD, self).__init__(params, defaults)
 
-    @staticmethod
-    def listen(model):
-        """Init and run the sgd client"""
-        sgd_client = DownpourListener(model=model)
-        sgd_client.run()
-
-    def get_update_thread(self):
-        return update_thread
-        
     def step(self, closure=None):
         """Performs a single optimization step.
 
@@ -63,18 +59,18 @@ class DownpourSGD(Optimizer):
         if closure is not None:
             loss = closure()
         
-        # send gradient request every 10 iterations
+        # send parameter request every N iterations
         if self.idx % self.freq == 0:
             send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val 
 
         # keep track of accumulated gradients so that we can send 
         gradients = ravel_model_params(self.model, grads=True)
-        self.accumulated_gradients += gradients
+        self.accumulated_gradients.add_(-self.lr, gradients)
 
+        # send gradient update every N iterations
         if self.idx % self.freq == 0:
             send_message(MessageCode.GradientUpdate, self.accumulated_gradients) # send gradients to the server
-            # reset gradients
-            self.accumulated_gradients = torch.zeros(self.accumulated_gradients.size())
+            self.accumulated_gradients.zero_()
 
         # internal sgd update
         for group in self.param_groups:

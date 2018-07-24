@@ -1,8 +1,11 @@
+first:
+	python example/first_node.py
+
+second:
+	python example/second_node.py
+
 server:
-	python parameter_server.py
+	python example/server_node.py
 
-train:
-	python main.py 
-
-second_node:
-	python second_node.py
+install:
+	pip install .

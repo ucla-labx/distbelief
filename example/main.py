@@ -1,13 +1,12 @@
 import torch
 import torchvision
 import torchvision.transforms as transforms
-import matplotlib.pyplot as plt
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 
 import torch.optim as optim
-from downpour_sgd import DownpourSGD
+from distbelief.optim import DownpourSGD
 import threading
 import argparse
 
@@ -77,11 +76,14 @@ def main(*args, **kwargs):
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
+<<<<<<< HEAD:main.py
 
     def imshow(img):
         img = img / 2 + 0.5     # unnormalize
         npimg = img.numpy()
         plt.imshow(np.transpose(npimg, (1, 2, 0)))
+=======
+>>>>>>> jcaip/refactor:example/main.py
 
     dataiter = iter(trainloader)
     images, labels = dataiter.next()
@@ -124,11 +126,6 @@ def main(*args, **kwargs):
     net.eval()
     dataiter = iter(testloader)
     images, labels = dataiter.next()
-
-    # print images
-    imshow(torchvision.utils.make_grid(images))
-    print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
-
 
     outputs = net(images)
 

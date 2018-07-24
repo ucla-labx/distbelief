@@ -1,20 +1,6 @@
 # distbelief
 Implementing Google's DistBelief paper.
 
-## Installation/Development instructions
-
-You'll want to create a python3 virtualenv first, after which, you should run `make install`. 
-You'll then be able to use distbelief by importing 
-```python 
-
-from distbelief.optim import DownpourSGD
-
-optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
-
-```
-
-As an example, you can see our implementation running by opening three seperate terminal windows and running `make server`, `make first` and `make second`, which will train a CNN on CIFAR10.
-
 ## DownpourSGD for PyTorch
 
 DownpourSGD is pretty simple, there are two core concepts - a parameter server and a training node.
@@ -22,7 +8,7 @@ DownpourSGD is pretty simple, there are two core concepts - a parameter server a
 The parameter server is just a copy of the model parameters, it can get a gradient update or send parameters.
 
 The training node asynchronously pulls the parameters, and then does your usual train step (compute loss, the backprop).
-Once we've gotten the gradients, we send a copy to the parameter server, apply the update, and then continue training.
+Once we've gotten the gradients, we send a copy to the parameter server, apply the update, and then continue training. 
 
 ### Sending messages
 

@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import torch.optim as optim
-from distbelief.optim.downpour_sgd import DownpourSGD
+from distbelief.optim import DownpourSGD
 import threading
 
 class Net(nn.Module):

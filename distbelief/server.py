@@ -4,7 +4,7 @@ Parameter server for distbelief
 import logging
 import torch
 import torch.distributed as dist
-from distbelief.utils.messaging import MessageCode, MessageListener
+from distbelief.utils.messaging import MessageCode, MessageListener, send_message
 from distbelief.utils.serialization import ravel_model_params
 
 _LOGGER = logging.getLogger(__name__)

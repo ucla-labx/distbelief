@@ -3,6 +3,7 @@ from threading import Thread
 import logging
 import torch
 import torch.distributed as dist
+from distbelief.utils.serialization import ravel_model_params
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',

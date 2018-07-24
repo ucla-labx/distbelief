@@ -1,5 +1,5 @@
 from distbelief.server import ParameterServer
-from distbelief.utils import init_processes
+from distbelief.utils.distributed import init_processes
 from main import Net
 
 def init_server():

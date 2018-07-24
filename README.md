@@ -5,7 +5,7 @@ Implementing Google's DistBelief paper.
 
 You'll want to create a python3 virtualenv first, after which, you should run `make install`. 
 You'll then be able to use distbelief by importing 
-``python 
+```python 
 
 from distbelief.optim import DownpourSGD
 

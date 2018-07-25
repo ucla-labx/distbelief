@@ -5,14 +5,7 @@ import os
 import torch
 import torch.distributed as dist
 
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
-
 _LOGGER = logging.getLogger(__name__)
-
-
 
 def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment.

@@ -57,26 +57,20 @@ def main(*args, **kwargs):
     #                            transforms.Normalize((0.1307,), (0.3081,))
     #                        ])),
     #         batch_size=args.test_batch_size, shuffle=True, **kwargs)
-
     # TODO: distinguishing between MNIST and CIFAR for experimentation
-    transform = transforms.Compose(
-        [transforms.ToTensor(),
-         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
-                                            download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=4,
-                                              shuffle=True, num_workers=2)
+    transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
 
-    testset = torchvision.datasets.CIFAR10(root='../data', train=False,
-                                           download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                             shuffle=False, num_workers=2)
+    trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=64, shuffle=True, num_workers=1)
 
-    classes = ('plane', 'car', 'bird', 'cat',
-               'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+    testset = torchvision.datasets.CIFAR10(root='../data', train=False, download=True, transform=transform)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=64, shuffle=False, num_workers=1)
 
-
+    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     dataiter = iter(trainloader)
     images, labels = dataiter.next()
@@ -84,12 +78,12 @@ def main(*args, **kwargs):
     net = Net()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
-    # optimizer = optim.SGD(net.parameters(), lr=0.001)
+    # optimizer = DownpourSGD(net.parameters(), lr=0.01, freq=10, model=net)
+    optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.0)
 
     net.train()
-    for epoch in range(10):  # loop over the dataset multiple times
-
+    num_print = 20
+    for epoch in range(15):  # loop over the dataset multiple times
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # get the inputs
@@ -106,16 +100,15 @@ def main(*args, **kwargs):
 
             # print statistics
             running_loss += loss.item()
-            if i % 25 == 0:    # print every 2000 mini-batches
-                print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 25))
+            if i % num_print == 0:    # print every n mini-batches
+                print('Epoch: %d, Iteration: %5d loss: %.3f' % (epoch, i, running_loss / num_print))
                 running_loss = 0.0
+        evaluate(net, testloader, classes)
 
-    # ensure that all of the updates from the parameter server have been received
-    update_thread = optimizer.get_update_thread()
-    update_thread.join()
     print('Finished Training')
 
+
+def evaluate(net, testloader, classes):
     net.eval()
     dataiter = iter(testloader)
     images, labels = dataiter.next()
@@ -123,9 +116,6 @@ def main(*args, **kwargs):
     outputs = net(images)
 
     _, predicted = torch.max(outputs, 1)
-
-    print('Predicted: ', ' '.join('%5s' % classes[predicted[j]]
-                                  for j in range(4)))
 
     correct = 0
     total = 0
@@ -152,7 +142,6 @@ def main(*args, **kwargs):
                 label = labels[i]
                 class_correct[label] += c[i].item()
                 class_total[label] += 1
-
 
     for i in range(10):
         print('Accuracy of %5s : %2d %%' % (

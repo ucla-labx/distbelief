@@ -76,14 +76,7 @@ def main(*args, **kwargs):
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-<<<<<<< HEAD:main.py
 
-    def imshow(img):
-        img = img / 2 + 0.5     # unnormalize
-        npimg = img.numpy()
-        plt.imshow(np.transpose(npimg, (1, 2, 0)))
-=======
->>>>>>> jcaip/refactor:example/main.py
 
     dataiter = iter(trainloader)
     images, labels = dataiter.next()

@@ -83,7 +83,7 @@ def main(*args, **kwargs):
 
     net.train()
     num_print = 20
-    for epoch in range(15):  # loop over the dataset multiple times
+    for epoch in range(25):  # loop over the dataset multiple times
         running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # get the inputs

@@ -9,7 +9,6 @@ _LOGGER = logging.getLogger(__name__)
 class DownpourListener(MessageListener):
     """DownpourListener"""
     def __init__(self, model):
-        print("Creating downpour listener")
         super().__init__(model)
 
     def receive(self, sender, message_code, parameter):

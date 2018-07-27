@@ -105,8 +105,8 @@ def main(*args, **kwargs):
     net = AlexNet()
 
     criterion = nn.CrossEntropyLoss()
-    # optimizer = DownpourSGD(net.parameters(), lr=0.01, freq=10, model=net)
-    optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.0)
+    optimizer = DownpourSGD(net.parameters(), lr=0.1, freq=10, model=net)
+    # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.0)
 
     net.train()
     num_print = 20

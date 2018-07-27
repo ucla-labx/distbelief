@@ -9,6 +9,10 @@ import torch.optim as optim
 from distbelief.optim import DownpourSGD
 import threading
 import argparse
+import logging
+
+logging.basicConfig(level=logging.INFO)
+_LOGGER = logging.getLogger(__name__)
 
 class LeNet(nn.Module):
     def __init__(self):
@@ -56,6 +60,7 @@ class AlexNet(nn.Module):
         x = self.classifier(x)
         return x
 
+flag_use_cuda = False
 
 def main(*args, **kwargs):
     parser = argparse.ArgumentParser(description='Distbelief training example')
@@ -99,16 +104,16 @@ def main(*args, **kwargs):
 
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
-    dataiter = iter(trainloader)
-    images, labels = dataiter.next()
-
     net = AlexNet()
 
-    criterion = nn.CrossEntropyLoss()
     optimizer = DownpourSGD(net.parameters(), lr=0.1, freq=10, model=net)
     # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.0)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True)
 
     net.train()
+    if flag_use_cuda:
+        net = net.cuda()
+
     num_print = 20
     for epoch in range(25):  # loop over the dataset multiple times
         running_loss = 0.0
@@ -116,52 +121,41 @@ def main(*args, **kwargs):
             # get the inputs
             inputs, labels = data
 
+            if flag_use_cuda:
+                inputs, labels = inputs.cuda(), labels.cuda()
+
             # zero the parameter gradients
             optimizer.zero_grad()
             
             # forward + backward + optimize
             outputs = net(inputs)
-            loss = criterion(outputs, labels)
+            loss = F.cross_entropy(outputs, labels)
             loss.backward()
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
             if i % num_print == 0:    # print every n mini-batches
-                print('Epoch: %d, Iteration: %5d loss: %.3f' % (epoch, i, running_loss / num_print))
+                _LOGGER.info('Epoch: %d, Iteration: %5d loss: %.3f' % (epoch, i, running_loss / num_print))
                 running_loss = 0.0
-        evaluate(net, testloader, classes)
+        val_loss = evaluate(net, testloader, classes)
+        scheduler.step(val_loss)
 
-    print('Finished Training')
+    _LOGGER.info('Finished Training')
 
 
 def evaluate(net, testloader, classes):
     net.eval()
-    dataiter = iter(testloader)
-    images, labels = dataiter.next()
-
-    outputs = net(images)
-
-    _, predicted = torch.max(outputs, 1)
-
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for data in testloader:
-            images, labels = data
-            outputs = net(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-        100 * correct / total))
-
+    running_loss = 0.0
     class_correct = list(0. for i in range(10))
     class_total = list(0. for i in range(10))
     with torch.no_grad():
         for data in testloader:
             images, labels = data
+
+            if flag_use_cuda:
+                images, labels = images.cuda(), labels.cuda()
+
             outputs = net(images)
             _, predicted = torch.max(outputs, 1)
             c = (predicted == labels).squeeze()
@@ -169,10 +163,17 @@ def evaluate(net, testloader, classes):
                 label = labels[i]
                 class_correct[label] += c[i].item()
                 class_total[label] += 1
+            running_loss += F.cross_entropy(outputs, labels).item()
+
+    _LOGGER.info('Loss: {:.3f}'.format(running_loss / len(testloader)))
+    _LOGGER.info('Accuracy of the network on the 10000 test images: %d %%' % (
+        100 * sum(class_correct)/ sum(class_total)))
 
     for i in range(10):
-        print('Accuracy of %5s : %2d %%' % (
+        _LOGGER.info('Accuracy of %5s : %2d %%' % (
             classes[i], 100 * class_correct[i] / class_total[i]))
+    
+    return running_loss
 
 if __name__ == '__main__':
     main()

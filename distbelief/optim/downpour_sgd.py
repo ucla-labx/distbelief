@@ -1,7 +1,6 @@
 import logging
 import torch
 from torch.optim.optimizer import Optimizer, required
-
 from distbelief.utils.serialization import ravel_model_params, unravel_model_params
 from distbelief.utils.messaging import MessageCode, MessageListener, send_message
 
@@ -10,13 +9,13 @@ _LOGGER = logging.getLogger(__name__)
 class DownpourListener(MessageListener):
     """DownpourListener"""
     def __init__(self, model):
-            super().__init__(model)
+        super().__init__(model)
 
     def receive(self, sender, message_code, parameter):
-            """receive parameter updates from the server and reflect them into the client's model."""
-            _LOGGER.info("Processing message: {}".format(message_code.name))
-            if message_code == MessageCode.ParameterUpdate:
-                unravel_model_params(self.model, parameter)
+        """receive parameter updates from the server and reflect them into the client's model."""
+        _LOGGER.info("Processing message: {}".format(message_code.name))
+        if message_code == MessageCode.ParameterUpdate:
+            unravel_model_params(self.model, parameter)
 
 class DownpourSGD(Optimizer):
     """DownpourSGD"""
@@ -38,13 +37,12 @@ class DownpourSGD(Optimizer):
         self.freq = freq
 
         self.model = model
-        self.model.share_memory()
         # this sets the initial model parameters
         send_message(MessageCode.ParameterUpdate, ravel_model_params(self.model))
-        # start the  listener thread
-        update_thread = DownpourListener(self.model)
-        update_thread.start()
         self.idx = 0
+
+        listener = DownpourListener(self.model)
+        listener.start()
 
         super(DownpourSGD, self).__init__(params, defaults)
 

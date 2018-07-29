@@ -1,14 +1,9 @@
 from enum import Enum
-from threading import Thread
 import logging
 import torch
 import torch.distributed as dist
+from threading import Thread
 from distbelief.utils.serialization import ravel_model_params
-
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,11 +19,6 @@ class MessageListener(Thread):
    
     base class for message listeners, extends pythons threading Thread
     """
-<<<<<<< HEAD:utils.py
-    m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
-    m_parameter = torch.cat((m_parameter, payload))
-    dist.isend(tensor=m_parameter, dst=dst)
-=======
     def __init__(self, model):
         """__init__
 
@@ -63,8 +53,8 @@ def send_message(message_code, payload, dst=0):
     """Sends a message to a destination
     Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
     """
+    # _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
     m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
     m_parameter = torch.cat((m_parameter, payload))
     dist.isend(tensor=m_parameter, dst=dst)
 
->>>>>>> jcaip/refactor:distbelief/utils/messaging.py

@@ -10,6 +10,7 @@ from distbelief.optim import DownpourSGD
 import threading
 import argparse
 
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -29,6 +30,7 @@ class Net(nn.Module):
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+
 
 def main(*args, **kwargs):
     parser = argparse.ArgumentParser(description='Distbelief training example')
@@ -75,11 +77,6 @@ def main(*args, **kwargs):
 
     classes = ('plane', 'car', 'bird', 'cat',
                'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-
-
-    dataiter = iter(trainloader)
-    images, labels = dataiter.next()
 
     net = Net()
 
@@ -153,10 +150,10 @@ def main(*args, **kwargs):
                 class_correct[label] += c[i].item()
                 class_total[label] += 1
 
-
     for i in range(10):
         print('Accuracy of %5s : %2d %%' % (
             classes[i], 100 * class_correct[i] / class_total[i]))
+
 
 if __name__ == '__main__':
     main()

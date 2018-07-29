@@ -7,6 +7,7 @@ import torch.distributed as dist
 
 _LOGGER = logging.getLogger(__name__)
 
+
 def init_processes(rank, size, fn, backend='tcp'):
     """ Initialize the distributed environment.
     Server and clients must call this as an entry point.

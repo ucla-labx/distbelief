@@ -7,12 +7,14 @@ from distbelief.utils.serialization import ravel_model_params
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class MessageCode(Enum):
     """Different types of messages between client and server that we support go here."""
     ParameterRequest = 0
     GradientUpdate = 1
     ParameterUpdate = 2
     EvaluateParams = 3
+
 
 class MessageListener(Thread):
     """MessageListener
@@ -48,6 +50,7 @@ class MessageListener(Thread):
             self.receive(int(self.m_parameter[0].item()),
                          MessageCode(self.m_parameter[1].item()),
                          self.m_parameter[2:])
+
 
 def send_message(message_code, payload, dst=0):
     """Sends a message to a destination

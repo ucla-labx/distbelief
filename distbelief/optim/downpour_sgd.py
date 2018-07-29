@@ -6,6 +6,7 @@ from distbelief.utils.messaging import MessageCode, MessageListener, send_messag
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class DownpourListener(MessageListener):
     """DownpourListener"""
     def __init__(self, model):
@@ -16,6 +17,7 @@ class DownpourListener(MessageListener):
         _LOGGER.info("Processing message: {}".format(message_code.name))
         if message_code == MessageCode.ParameterUpdate:
             unravel_model_params(self.model, parameter)
+
 
 class DownpourSGD(Optimizer):
     """DownpourSGD"""

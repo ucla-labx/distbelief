@@ -11,7 +11,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class ParameterServer(MessageListener):
     """ParameterServer"""
-    def __init__(self, model, random_seed=42):
+    def __init__(self, model):
         _LOGGER.info("Creating ParameterServer")
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
         #init superclass

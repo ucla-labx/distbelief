@@ -5,8 +5,12 @@ from main import Net
 
 def init_server():
     model = Net()
+    print('before parameter server constructed')
     server = ParameterServer(model=model)
-    server.start()
+    print('parameter server constructed')
+    print('fuck fuck')
+    server.run()
+    print('called server.run')
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import logging
 import torch
 from torch.optim.optimizer import Optimizer, required
+from threading import Thread
 from distbelief.utils.serialization import ravel_model_params, unravel_model_params
 from distbelief.utils.messaging import MessageCode, MessageListener, send_message
 
@@ -43,8 +44,11 @@ class DownpourSGD(Optimizer):
         send_message(MessageCode.ParameterUpdate, ravel_model_params(self.model))
         self.idx = 0
 
+        # create a listener that runs in a separate thread, checking for info from servers.
         listener = DownpourListener(self.model)
-        listener.start()
+        print('starting thread')
+        t = Thread(target=listener.run)
+        t.start()
 
         super(DownpourSGD, self).__init__(params, defaults)
 

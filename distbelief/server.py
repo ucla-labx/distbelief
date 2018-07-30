@@ -3,7 +3,6 @@ Parameter server for distbelief
 """
 import logging
 import torch
-import torch.distributed as dist
 from distbelief.utils.messaging import MessageCode, MessageListener, send_message
 from distbelief.utils.serialization import ravel_model_params
 
@@ -28,4 +27,6 @@ class ParameterServer(MessageListener):
             send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=sender)    
 
         elif message_code == MessageCode.GradientUpdate:
+            # assumes that parameter contains the updated gradients scaled by the learning rate, so all we need to do
+            # is add them
             self.parameter_shard.add_(parameter)

@@ -65,10 +65,11 @@ class DownpourSGD(Optimizer):
         
         # send parameter request every N iterations
         if self.idx % self.freq == 0:
-            send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val 
+            send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val
 
         # keep track of accumulated gradients so that we can send 
         gradients = ravel_model_params(self.model, grads=True)
+        # this does self.accumulated_gradients+=-self.lr * gradients
         self.accumulated_gradients.add_(-self.lr, gradients)
 
         # send gradient update every N iterations
@@ -86,4 +87,11 @@ class DownpourSGD(Optimizer):
         
         self.idx += 1
         return loss
+
+    # def start_listening(self):
+    #     self.listener.start()
+    #
+    # def stop_listening(self):
+    #     self.listener.join()
+
 

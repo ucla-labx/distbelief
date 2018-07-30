@@ -1,8 +1,5 @@
-
-from enum import Enum
 import logging
 import os
-import torch
 import torch.distributed as dist
 
 _LOGGER = logging.getLogger(__name__)

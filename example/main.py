@@ -11,8 +11,8 @@ import threading
 import argparse
 import logging
 
-logging.basicConfig(level=logging.INFO)
-_LOGGER = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.INFO)
+# _LOGGER = logging.getLogger(__name__)
 
 class LeNet(nn.Module):
     def __init__(self):
@@ -136,12 +136,12 @@ def main(*args, **kwargs):
             # print statistics
             running_loss += loss.item()
             if i % num_print == 0:    # print every n mini-batches
-                _LOGGER.info('Epoch: %d, Iteration: %5d loss: %.3f' % (epoch, i, running_loss / num_print))
+                print('Epoch: %d, Iteration: %5d loss: %.3f' % (epoch, i, running_loss / num_print))
                 running_loss = 0.0
         val_loss = evaluate(net, testloader, classes)
         scheduler.step(val_loss)
 
-    _LOGGER.info('Finished Training')
+    print('Finished Training')
 
 
 def evaluate(net, testloader, classes):
@@ -165,12 +165,12 @@ def evaluate(net, testloader, classes):
                 class_total[label] += 1
             running_loss += F.cross_entropy(outputs, labels).item()
 
-    _LOGGER.info('Loss: {:.3f}'.format(running_loss / len(testloader)))
-    _LOGGER.info('Accuracy of the network on the 10000 test images: %d %%' % (
+    print('Loss: {:.3f}'.format(running_loss / len(testloader)))
+    print('Accuracy of the network on the 10000 test images: %d %%' % (
         100 * sum(class_correct)/ sum(class_total)))
 
     for i in range(10):
-        _LOGGER.info('Accuracy of %5s : %2d %%' % (
+        print('Accuracy of %5s : %2d %%' % (
             classes[i], 100 * class_correct[i] / class_total[i]))
     
     return running_loss

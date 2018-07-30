@@ -83,7 +83,8 @@ def main(*args, **kwargs):
 
     criterion = nn.CrossEntropyLoss()
     print('initializing downpour listener')
-    optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=10, model=net)
+    downpour_optim = optim.SGD(net.parameters(), lr=args.lr)
+    optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=10, model=net, internal_optim=downpour_optim)
     # optimizer = optim.SGD(net.parameters(), lr=0.01, momentum=0.0)
 
     net.train()

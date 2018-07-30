@@ -1,6 +1,7 @@
 import logging
 import torch
 from torch.optim.optimizer import Optimizer, required
+import torch.optim
 from threading import Thread
 from distbelief.utils.serialization import ravel_model_params, unravel_model_params
 from distbelief.utils.messaging import MessageCode, MessageListener, send_message
@@ -23,7 +24,7 @@ class DownpourListener(MessageListener):
 class DownpourSGD(Optimizer):
     """DownpourSGD"""
 
-    def __init__(self, params, lr=required, freq=required, model=required):
+    def __init__(self, params, lr=required, freq=required, model=required, internal_optim=None):
         """__init__
 
         :param params:
@@ -50,6 +51,8 @@ class DownpourSGD(Optimizer):
         t = Thread(target=listener.run)
         t.start()
 
+        # initializing internal optimizer
+        self.internal_optim = internal_optim if internal_optim else optim.SGD(params, defaults)
         super(DownpourSGD, self).__init__(params, defaults)
 
     def step(self, closure=None):
@@ -78,12 +81,14 @@ class DownpourSGD(Optimizer):
             self.accumulated_gradients.zero_()
 
         # internal sgd update
-        for group in self.param_groups:
-            for p in group['params']:
-                if p.grad is None:
-                    continue
-                d_p = p.grad.data
-                p.data.add_(-group['lr'], d_p)
+
+        self.internal_optim.step(closure)
+        # for group in self.param_groups:
+        #     for p in group['params']:
+        #         if p.grad is None:
+        #             continue
+        #         d_p = p.grad.data
+        #         p.data.add_(-group['lr'], d_p)
         
         self.idx += 1
         return loss

@@ -10,9 +10,10 @@ _LOGGER = logging.getLogger(__name__)
 
 class ParameterServer(MessageListener):
     """ParameterServer"""
-    def __init__(self, model):
+    def __init__(self, model, lr=0.01):
         _LOGGER.info("Creating ParameterServer")
         self.parameter_shard = torch.rand(ravel_model_params(model).numel())
+        self.lr = lr
         #init superclass
         super().__init__(model)
 
@@ -29,4 +30,4 @@ class ParameterServer(MessageListener):
         elif message_code == MessageCode.GradientUpdate:
             # assumes that parameter contains the updated gradients scaled by the learning rate, so all we need to do
             # is add them
-            self.parameter_shard.add_(parameter)
+            self.parameter_shard.add_(-self.lr, parameter)

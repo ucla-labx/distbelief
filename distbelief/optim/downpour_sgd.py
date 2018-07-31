@@ -70,10 +70,12 @@ class DownpourSGD(Optimizer):
         if self.idx % self.freq == 0:
             send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val
 
+        # NB: loss.backward() should be called before this, so that we are sure that the .grad in the model params
+        # can be accessed. This should be always satisfied since we call loss.backward() right before step()
         # keep track of accumulated gradients so that we can send 
         gradients = ravel_model_params(self.model, grads=True)
         # this does self.accumulated_gradients+=-self.lr * gradients
-        self.accumulated_gradients.add_(-self.lr, gradients)
+        self.accumulated_gradients.add_(gradients)
 
         # send gradient update every N iterations
         if self.idx % self.freq == 0:
@@ -83,20 +85,8 @@ class DownpourSGD(Optimizer):
         # internal sgd update
 
         self.internal_optim.step(closure)
-        # for group in self.param_groups:
-        #     for p in group['params']:
-        #         if p.grad is None:
-        #             continue
-        #         d_p = p.grad.data
-        #         p.data.add_(-group['lr'], d_p)
         
         self.idx += 1
         return loss
-
-    # def start_listening(self):
-    #     self.listener.start()
-    #
-    # def stop_listening(self):
-    #     self.listener.join()
 
 

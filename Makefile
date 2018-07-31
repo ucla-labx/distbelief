@@ -1,11 +1,11 @@
 first:
-	python -u example/first_node.py | tee first.log
+	python example/main.py --rank 1 --world-size 3 
 
 second:
-	python -u example/second_node.py | tee second.log
+	python example/main.py --rank 2 --world-size 3
 
 server:
-	python -u example/server_node.py | tee server.log
+	python example/main.py --rank 0 --world-size 3 --server
 
 install:
 	pip install .

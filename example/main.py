@@ -108,7 +108,7 @@ def main(*args, **kwargs):
 
     optimizer = DownpourSGD(net.parameters(), lr=0.1, freq=10, model=net)
     # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.0)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
 
     net.train()
     if flag_use_cuda:

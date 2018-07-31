@@ -13,3 +13,4 @@ torchvision==0.2.1
 Werkzeug==0.14.1
 matplotlib
 pandas
+sklearn

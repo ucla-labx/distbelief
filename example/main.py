@@ -1,6 +1,7 @@
 import os
 import logging 
 import argparse
+import csv
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -10,6 +11,7 @@ import torch.nn.functional as F
 import torch.distributed as dist
 
 from models import LeNet, AlexNet
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
 import torch.optim as optim
 from distbelief.optim import DownpourSGD
@@ -28,9 +30,7 @@ def main(args):
     testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=2)
 
-    
-
-    net = AlexNet()
+    net = LeNet()
 
     if args.distributed:
         optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net)
@@ -77,9 +77,7 @@ def evaluate(net, testloader, args):
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     net.eval()
     running_loss = 0.0
-    class_correct = list(0. for i in range(10))
-    class_total = list(0. for i in range(10))
-
+    
     with torch.no_grad():
         for data in testloader:
             images, labels = data
@@ -89,32 +87,23 @@ def evaluate(net, testloader, args):
 
             outputs = net(images)
             _, predicted = torch.max(outputs, 1)
-            c = (predicted == labels).squeeze()
-            for i in range(4):
-                label = labels[i]
-                class_correct[label] += c[i].item()
-                class_total[label] += 1
             running_loss += F.cross_entropy(outputs, labels).item()
 
     print('Loss: {:.3f}'.format(running_loss / len(testloader)))
-    print('Accuracy of the network on the 10000 test images: %d %%' % (
-        100 * sum(class_correct)/ sum(class_total)))
-
-    for i in range(10):
-        print('Accuracy of %5s : %2d %%' % (
-            classes[i], 100 * class_correct[i] / class_total[i]))
+    print('Accuracy: {:.3f}'.format(accuracy_score(predicted, labels)))
+    print(classification_report(predicted, labels, target_names=classes))
     
     return running_loss
 
 def init_server(args):
-    model = AlexNet()
+    model = LeNet()
     server = ParameterServer(model=model)
     server.run()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Distbelief training example')
     parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='input batch size for training (default: 64)')
-    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N', help='input batch size for testing (default: 1000)')
+    parser.add_argument('--test-batch-size', type=int, default=10000, metavar='N', help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=10, metavar='N', help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.1)')
     parser.add_argument('--freq', type=int, default=10, metavar='N', help='how often to send/pull grads (default: 10)')
@@ -124,8 +113,9 @@ if __name__ == "__main__":
     parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
-
     args = parser.parse_args()
+    print(args)
+
     if args.distributed:
         """ Initialize the distributed environment.
         Server and clients must call this as an entry point.

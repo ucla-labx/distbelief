@@ -52,7 +52,7 @@ class DownpourSGD(Optimizer):
         t.start()
 
         # initializing internal optimizer
-        self.internal_optim = internal_optim if internal_optim else optim.SGD(params, defaults)
+        self.internal_optim = internal_optim if internal_optim else torch.optim.SGD(params, defaults)
         super(DownpourSGD, self).__init__(params, defaults)
 
     def step(self, closure=None):

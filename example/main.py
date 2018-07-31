@@ -17,6 +17,25 @@ import torch.optim as optim
 from distbelief.optim import DownpourSGD
 from distbelief.server import ParameterServer
 
+
+def get_dataset(args, transform):
+    """
+    :param dataset_name:
+    :param transform:
+    :param batch_size:
+    :return: iterators for the dataset
+    """
+    if args.dataset == 'MNIST':
+        trainset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+        testset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+    else:
+        trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+        testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
+
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=1)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)
+    return trainloader, testloader
+
 def main(args):
 
     transform = transforms.Compose([
@@ -24,12 +43,7 @@ def main(args):
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
             ])
 
-    trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=2)
-
-    testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=2)
-
+    trainloader, testloader = get_dataset(args, transform)
     net = LeNet()
 
     if args.distributed:
@@ -54,7 +68,6 @@ def main(args):
 
             # zero the parameter gradients
             optimizer.zero_grad()
-            
             # forward + backward + optimize
             outputs = net(inputs)
             loss = F.cross_entropy(outputs, labels)
@@ -113,6 +126,7 @@ if __name__ == "__main__":
     parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
+    parser.add_argument('--dataset', type=str, default='CIFAR10', help='which dataset to train on')
     args = parser.parse_args()
     print(args)
 

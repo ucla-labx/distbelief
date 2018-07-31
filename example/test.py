@@ -1,15 +1,15 @@
 from main import main
-from distbelief.utils.distributed import init_processes
-
 from torch.multiprocessing import Process
 from distbelief.server import ParameterServer
 from distbelief.utils.distributed import init_processes
 from main import Net
 
+
 def init_server():
     model = Net()
     server = ParameterServer(model=model)
     server.start()
+
 
 if __name__ == "__main__":
     processes = []

@@ -1,5 +1,6 @@
 import torch
 
+
 def ravel_model_params(model, grads=False):
     """
     Squash model parameters or gradients into a single tensor.
@@ -11,6 +12,7 @@ def ravel_model_params(model, grads=False):
         else:
             m_parameter = torch.cat((m_parameter, parameter.data.view(-1)))
     return m_parameter[1:]
+
 
 def unravel_model_params(model, parameter_update):
     """

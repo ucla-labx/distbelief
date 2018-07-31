@@ -1,10 +1,13 @@
 import logging
 import torch
 from torch.optim.optimizer import Optimizer, required
+import torch.optim
+from threading import Thread
 from distbelief.utils.serialization import ravel_model_params, unravel_model_params
 from distbelief.utils.messaging import MessageCode, MessageListener, send_message
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class DownpourListener(MessageListener):
     """DownpourListener"""
@@ -17,10 +20,11 @@ class DownpourListener(MessageListener):
         if message_code == MessageCode.ParameterUpdate:
             unravel_model_params(self.model, parameter)
 
+
 class DownpourSGD(Optimizer):
     """DownpourSGD"""
 
-    def __init__(self, params, lr=required, freq=required, model=required):
+    def __init__(self, params, lr=required, freq=required, model=required, internal_optim=None):
         """__init__
 
         :param params:
@@ -40,9 +44,14 @@ class DownpourSGD(Optimizer):
         send_message(MessageCode.ParameterUpdate, ravel_model_params(self.model))
         self.idx = 0
 
+        # create a listener that runs in a separate thread, checking for info from servers.
         listener = DownpourListener(self.model)
-        listener.start()
+        print('starting thread')
+        t = Thread(target=listener.run)
+        t.start()
 
+        # initializing internal optimizer
+        self.internal_optim = internal_optim if internal_optim else torch.optim.SGD(params, defaults)
         super(DownpourSGD, self).__init__(params, defaults)
 
     def step(self, closure=None):
@@ -58,7 +67,7 @@ class DownpourSGD(Optimizer):
         
         # send parameter request every N iterations
         if self.idx % self.freq == 0:
-            send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val 
+            send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val
 
         #get the lr
         lr = self.param_groups[0]['lr']
@@ -72,13 +81,10 @@ class DownpourSGD(Optimizer):
             self.accumulated_gradients.zero_()
 
         # internal sgd update
-        for group in self.param_groups:
-            for p in group['params']:
-                if p.grad is None:
-                    continue
-                d_p = p.grad.data
-                p.data.add_(-group['lr'], d_p)
+
+        self.internal_optim.step(closure)
         
         self.idx += 1
         return loss
+
 

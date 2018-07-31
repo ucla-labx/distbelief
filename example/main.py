@@ -1,3 +1,4 @@
+import os
 import logging 
 import argparse
 import torch
@@ -6,12 +7,12 @@ import torchvision.transforms as transforms
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.distributed as dist
 
 from models import LeNet, AlexNet
 
 import torch.optim as optim
 from distbelief.optim import DownpourSGD
-from distbelief.utils.distributed import init_processes
 from distbelief.server import ParameterServer
 
 def main(args):
@@ -31,8 +32,10 @@ def main(args):
 
     net = AlexNet()
 
-    optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net)
-    # optimizer = optim.SGD(net.parameters(), lr=0.1, momentum=0.0)
+    if args.distributed:
+        optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net)
+    else:
+        optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
 
     # train
@@ -106,7 +109,7 @@ def evaluate(net, testloader, args):
 def init_server(args):
     model = AlexNet()
     server = ParameterServer(model=model)
-    server.start()
+    server.run()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Distbelief training example')
@@ -117,12 +120,19 @@ if __name__ == "__main__":
     parser.add_argument('--freq', type=int, default=10, metavar='N', help='how often to send/pull grads (default: 10)')
     parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
+    parser.add_argument('--distributed', action='store_true', default=False, help='whether to use DownpourSGD or normal SGD')
     parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
 
     args = parser.parse_args()
-    if args.server:
-        init_processes(args, init_server)
-    else:
-        init_processes(args, main)
+    if args.distributed:
+        """ Initialize the distributed environment.
+        Server and clients must call this as an entry point.
+        """
+        os.environ['MASTER_ADDR'] = 'localhost'
+        os.environ['MASTER_PORT'] = '29500'
+        dist.init_process_group('tcp', rank=args.rank, world_size=args.world_size)
+        if args.server:
+            init_server(args)
+    main(args)

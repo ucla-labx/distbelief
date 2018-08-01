@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pytorch-distbelief",
-    version="0.0.1",
+    version="0.1.0",
     author="Jesse Cai",
     author_email="jcjessecai@gmail.com",
     description="Distributed training for pytorch",

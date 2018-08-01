@@ -1,11 +1,14 @@
 first:
-	python example/first_node.py
+	python example/main.py --rank 1 --world-size 3
 
 second:
-	python example/second_node.py
+	python example/main.py --rank 2 --world-size 3
 
 server:
-	python example/server_node.py
+	python example/main.py --rank 0 --world-size 3 --server
 
 install:
 	pip install .
+
+single:
+	python example/main.py --no-distributed --dataset MNIST

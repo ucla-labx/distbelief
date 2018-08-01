@@ -36,7 +36,6 @@ class DownpourSGD(Optimizer):
             raise ValueError("Invalid learning rate: {}".format(lr))
 
         defaults = dict(lr=lr,)
-        self.lr = lr
         self.accumulated_gradients = torch.zeros(ravel_model_params(model).size())
         self.freq = freq
 
@@ -70,12 +69,11 @@ class DownpourSGD(Optimizer):
         if self.idx % self.freq == 0:
             send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val
 
-        # NB: loss.backward() should be called before this, so that we are sure that the .grad in the model params
-        # can be accessed. This should be always satisfied since we call loss.backward() right before step()
+        #get the lr
+        lr = self.param_groups[0]['lr']
         # keep track of accumulated gradients so that we can send 
         gradients = ravel_model_params(self.model, grads=True)
-        # this does self.accumulated_gradients+=-self.lr * gradients
-        self.accumulated_gradients.add_(gradients)
+        self.accumulated_gradients.add_(-lr, gradients)
 
         # send gradient update every N iterations
         if self.idx % self.freq == 0:

@@ -46,10 +46,10 @@ def main(args):
     trainloader, testloader = get_dataset(args, transform)
     net = LeNet()
 
-    if args.distributed:
-        optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net)
-    else:
+    if args.no_distributed:
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
+    else:
+        optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
 
     # train
@@ -87,7 +87,10 @@ def main(args):
 
 
 def evaluate(net, testloader, args):
-    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+    if args.dataset == 'MNIST':
+        classes = [str(i) for i in range(10)]
+    else:
+        classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     net.eval()
     running_loss = 0.0
     
@@ -122,7 +125,7 @@ if __name__ == "__main__":
     parser.add_argument('--freq', type=int, default=10, metavar='N', help='how often to send/pull grads (default: 10)')
     parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
-    parser.add_argument('--distributed', action='store_true', default=False, help='whether to use DownpourSGD or normal SGD')
+    parser.add_argument('--no-distributed', action='store_true', default=False, help='whether to use DownpourSGD or normal SGD')
     parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
@@ -130,7 +133,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    if args.distributed:
+    if not args.no_distributed:
         """ Initialize the distributed environment.
         Server and clients must call this as an entry point.
         """

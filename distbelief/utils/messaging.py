@@ -5,10 +5,6 @@ import torch.distributed as dist
 from threading import Thread
 from distbelief.utils.serialization import ravel_model_params
 
-logging.basicConfig(
-    format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
-    datefmt='%Y-%m-%d %H:%M:%S')
 _LOGGER = logging.getLogger(__name__)
 
 

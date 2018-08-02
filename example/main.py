@@ -13,6 +13,7 @@ import torch.distributed as dist
 from datetime import datetime
 from models import LeNet, AlexNet
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+import pandas as pd
 
 import torch.optim as optim
 from distbelief.optim import DownpourSGD
@@ -47,7 +48,7 @@ def main(args):
             ])
 
     trainloader, testloader = get_dataset(args, transform)
-    net = LeNet()
+    net = AlexNet()
 
     if args.no_distributed:
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
@@ -61,6 +62,7 @@ def main(args):
         net = net.cuda()
 
     for epoch in range(args.epochs):  # loop over the dataset multiple times
+        print("Training for epoch {}".format(epoch))
         for i, data in enumerate(trainloader, 0):
             # get the inputs
             inputs, labels = data
@@ -81,7 +83,7 @@ def main(args):
 
             log_obj = {
                 'timestamp': datetime.now(),
-                'iteration': epoch*len(trainloader) + i,
+                'iteration': i,
                 'training_loss': loss.item(),
                 'training_accuracy': accuracy,
             }
@@ -97,11 +99,15 @@ def main(args):
 
             logs.append(log_obj)
                 
-
-        val_loss = evaluate(net, testloader, args, verbose=True)
+        val_loss, val_accuracy = evaluate(net, testloader, args, verbose=True)
         scheduler.step(val_loss)
 
-    print(pd.DataFrame(logs))
+    df = pd.DataFrame(logs)
+    print(df)
+    if args.no_distributed:
+        df.to_csv('single.csv')
+    else:
+        df.to_csv('node{}.csv'.format(dist.get_rank()))
     print('Finished Training')
 
 
@@ -126,14 +132,14 @@ def evaluate(net, testloader, args, verbose=False):
 
     test_accuracy = accuracy_score(predicted, labels)
     if verbose:
-        print('Loss: {:.3f}'.format(loss))
+        print('Loss: {:.3f}'.format(test_loss))
         print('Accuracy: {:.3f}'.format(test_accuracy))
         print(classification_report(predicted, labels, target_names=classes))
     
     return test_loss, test_accuracy
 
 def init_server(args):
-    model = LeNet()
+    model = AlexNet()
     server = ParameterServer(model=model)
     server.run()
 

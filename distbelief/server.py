@@ -9,7 +9,6 @@ from distbelief.utils.messaging import MessageCode, MessageListener, send_messag
 from distbelief.utils.serialization import ravel_model_params, unravel_model_params
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.INFO)
 
 class ParameterServer(MessageListener):
     """ParameterServer"""

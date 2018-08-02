@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.distributed as dist
 
+from datetime import datetime
 from models import LeNet, AlexNet
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
@@ -38,6 +39,8 @@ def get_dataset(args, transform):
 
 def main(args):
 
+    logs = []
+
     transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
@@ -58,7 +61,6 @@ def main(args):
         net = net.cuda()
 
     for epoch in range(args.epochs):  # loop over the dataset multiple times
-        running_loss = 0.0
         for i, data in enumerate(trainloader, 0):
             # get the inputs
             inputs, labels = data
@@ -74,26 +76,43 @@ def main(args):
             loss.backward()
             optimizer.step()
 
-            # print statistics
-            running_loss += loss.item()
-            if i % args.log_interval == 0 and i > 0:    # print every n mini-batches
-                print('Epoch: %d, Iteration: %5d loss: %.3f' % (epoch, i, running_loss / args.log_interval))
-                running_loss = 0.0
+            _, predicted = torch.max(outputs, 1)
+            accuracy = accuracy_score(predicted, labels)
 
-        val_loss = evaluate(net, testloader, args)
+            log_obj = {
+                'timestamp': datetime.now(),
+                'iteration': epoch*len(trainloader) + i,
+                'training_loss': loss.item(),
+                'training_accuracy': accuracy,
+            }
+
+            if i % args.log_interval == 0 and i > 0:    # print every n mini-batches
+                log_obj['test_loss'], log_obj['test_accuracy']= evaluate( net, testloader, args)
+                print("Timestamp: {timestamp} | "
+                      "Iteration: {iteration:6} | "
+                      "Loss: {training_loss:6.4f} | "
+                      "Accuracy : {training_accuracy:6.4f} | "
+                      "Test Loss: {test_loss:6.4f} | "
+                      "Test Accuracy: {test_accuracy:6.4f}".format(**log_obj))
+
+            logs.append(log_obj)
+                
+
+        val_loss = evaluate(net, testloader, args, verbose=True)
         scheduler.step(val_loss)
 
+    print(pd.DataFrame(logs))
     print('Finished Training')
 
 
-def evaluate(net, testloader, args):
+def evaluate(net, testloader, args, verbose=False):
     if args.dataset == 'MNIST':
         classes = [str(i) for i in range(10)]
     else:
         classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     net.eval()
-    running_loss = 0.0
-    
+   
+    test_loss = 0
     with torch.no_grad():
         for data in testloader:
             images, labels = data
@@ -103,13 +122,15 @@ def evaluate(net, testloader, args):
 
             outputs = net(images)
             _, predicted = torch.max(outputs, 1)
-            running_loss += F.cross_entropy(outputs, labels).item()
+            test_loss += F.cross_entropy(outputs, labels).item()
 
-    print('Loss: {:.3f}'.format(running_loss / len(testloader)))
-    print('Accuracy: {:.3f}'.format(accuracy_score(predicted, labels)))
-    print(classification_report(predicted, labels, target_names=classes))
+    test_accuracy = accuracy_score(predicted, labels)
+    if verbose:
+        print('Loss: {:.3f}'.format(loss))
+        print('Accuracy: {:.3f}'.format(test_accuracy))
+        print(classification_report(predicted, labels, target_names=classes))
     
-    return running_loss
+    return test_loss, test_accuracy
 
 def init_server(args):
     model = LeNet()
@@ -124,7 +145,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.1)')
     parser.add_argument('--freq', type=int, default=10, metavar='N', help='how often to send/pull grads (default: 10)')
     parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N', help='how many batches to wait before logging training status')
+    parser.add_argument('--log-interval', type=int, default=20, metavar='N', help='how often to evaluate and print out')
     parser.add_argument('--no-distributed', action='store_true', default=False, help='whether to use DownpourSGD or normal SGD')
     parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')

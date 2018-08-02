@@ -11,4 +11,4 @@ install:
 	pip install .
 
 single:
-	python example/main.py --no-distributed --dataset MNIST
+	python example/main.py --no-distributed --epochs 5 

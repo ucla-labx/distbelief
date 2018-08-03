@@ -49,7 +49,8 @@ def main(args):
     if args.no_distributed:
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
     else:
-        optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net)
+        internal_optim = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
+        optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net, internal_optim=None)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
 
     # train

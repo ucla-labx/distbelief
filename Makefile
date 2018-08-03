@@ -11,4 +11,4 @@ install:
 	pip install .
 
 single:
-	python example/main.py --no-distributed --epochs 2
+	python example/main.py --no-distributed --cuda

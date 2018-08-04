@@ -11,4 +11,7 @@ install:
 	pip install .
 
 single:
+	python example/main.py --no-distributed 
+
+gpu:
 	python example/main.py --no-distributed --cuda

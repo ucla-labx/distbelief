@@ -104,9 +104,12 @@ def main(args):
     df = pd.DataFrame(logs)
     print(df)
     if args.no_distributed:
-        df.to_csv('single.csv', index_label='index')
+        if args.cuda:
+            df.to_csv('gpu.csv', index_label='index')
+        else:
+            df.to_csv('single.csv', index_label='index')
     else:
-        df.to_csv('node{}.csv'.format(dist.get_rank()))
+        df.to_csv('node{}.csv'.format(dist.get_rank()), index_label='index')
     print('Finished Training')
 
 

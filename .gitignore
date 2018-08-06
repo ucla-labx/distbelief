@@ -5,3 +5,6 @@ train.log
 env/
 venv/
 .idea/
+.ipynb_checkpoints/*
+
+log/*

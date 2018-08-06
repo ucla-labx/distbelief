@@ -52,8 +52,7 @@ def main(args):
     if args.no_distributed:
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
     else:
-        internal_optim = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
-        optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net, internal_optim=None)
+        optimizer = DownpourSGD(net.parameters(), lr=args.lr, freq=args.freq, model=net)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
 
     # train
@@ -106,11 +105,12 @@ def main(args):
     print(df)
     if args.no_distributed:
         if args.cuda:
-            df.to_csv('gpu.csv', index_label='index')
+            df.to_csv('log/gpu.csv', index_label='index')
         else:
-            df.to_csv('single.csv', index_label='index')
+            df.to_csv('log/single.csv', index_label='index')
     else:
-        df.to_csv('node{}.csv'.format(dist.get_rank()), index_label='index')
+        df.to_csv('log/node{}.csv'.format(dist.get_rank()), index_label='index')
+
     print('Finished Training')
 
 
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=10000, metavar='N', help='input batch size for testing (default: 1000)')
     parser.add_argument('--epochs', type=int, default=20, metavar='N', help='number of epochs to train (default: 10)')
-    parser.add_argument('--lr', type=float, default=0.1, metavar='LR', help='learning rate (default: 0.1)')
+    parser.add_argument('--lr', type=float, default=0.003, metavar='LR', help='learning rate (default: 0.1)')
     parser.add_argument('--freq', type=int, default=10, metavar='N', help='how often to send/pull grads (default: 10)')
     parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N', help='how often to evaluate and print out')
@@ -160,6 +160,8 @@ if __name__ == "__main__":
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='which dataset to train on')
+    parser.add_argument('--master', type=str, default='localhost', help='ip address of the master (server) node')
+    parser.add_argument('--port', type=str, default='29500', help='port on master node to communicate with')
     args = parser.parse_args()
     print(args)
 
@@ -167,8 +169,8 @@ if __name__ == "__main__":
         """ Initialize the distributed environment.
         Server and clients must call this as an entry point.
         """
-        os.environ['MASTER_ADDR'] = 'localhost'
-        os.environ['MASTER_PORT'] = '29500'
+        os.environ['MASTER_ADDR'] = args.master
+        os.environ['MASTER_PORT'] = args.port
         dist.init_process_group('tcp', rank=args.rank, world_size=args.world_size)
         if args.server:
             init_server(args)

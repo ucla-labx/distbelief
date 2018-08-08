@@ -20,6 +20,8 @@ As an example, you can see our implementation running by using the script provid
 **NOTE:** we graph the train/test accuracy of each node, hence node1, node2, node3. A better comparison would be to evaluate the parameter server's params and use that value.
 However we can see that the accuracy between the three nodes is fairly consistent, and adding an evaluator might put too much stress on our server. 
 
+We set the learning rate of the nodes to be learning_rate/freq, or rougly 0.03.
+
 ![train](/docs/train_time.png)
 
 ![test](/docs/test_time.png)

@@ -37,7 +37,7 @@ for color, filename, df in zip(colors, files_to_read, log_dataframes):
 plt.ylabel('Training Accuracy')
 plt.xlabel('Time (hours)')
 plt.legend()
-plt.title("Training Accuracy vs. Time (50 iteration rolling average, freq: 5, lr: 0.05)")
+plt.title("Training Accuracy vs. Time (50 iteration rolling average, freq: 3, lr: 0.1)")
 plt.savefig('train_time.png')
 
 fig = plt.figure(figsize=(20, 10))
@@ -48,5 +48,5 @@ for color, filename, df in zip(colors, files_to_read, log_dataframes):
 plt.ylabel('Test Accuracy')
 plt.xlabel('Time (hours)')
 plt.legend()
-plt.title("Test Accuracy vs. Time (5 iteration rolling average, freq: 5, lr: 0.05)")
+plt.title("Test Accuracy vs. Time (5 iteration rolling average, freq: 3, lr: 0.1)")
 plt.savefig('test_time.png')

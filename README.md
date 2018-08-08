@@ -3,8 +3,8 @@ Implementing Google's DistBelief paper.
 
 ## Installation/Development instructions
 
-You'll want to create a python3 virtualenv first, after which, you should run `make install`. 
-You'll then be able to use distbelief by importing 
+You'll want to create a python3 virtualenv first by running `make setup`, after which, you should run `make install`. 
+You'll then be able to use distbelief by importing distbelief
 ```python 
 
 from distbelief.optim import DownpourSGD
@@ -13,7 +13,20 @@ optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
 
 ```
 
-As an example, you can see our implementation running by opening three seperate terminal windows and running `make server`, `make first` and `make second`, which will train a CNN on CIFAR10.
+As an example, you can see our implementation running by using the script provided in `example/main.py`.
+
+## Benchmarking
+
+**NOTE:** we graph the train/test accuracy of each node, hence node1, node2, node3. A better comparison would be to evaluate the parameter server's params and use that value.
+However we can see that the accuracy between the three nodes is fairly consistent, and adding an evaluator might put too much stress on our server. 
+
+We scale the learning rate of the nodes to be learning_rate/freq (.03) .
+
+![train](/docs/train_time.png)
+
+![test](/docs/test_time.png)
+
+We used AWS c4.xlarge instances to compare the CPU runs, and a GTX 1060 for the GPU run.
 
 ## DownpourSGD for PyTorch
 
@@ -30,11 +43,7 @@ We're using `dist.isend` and `dist.recv` to send and receive tensors via PyTorch
 
 For any given model, we squash the parameters to a single parameter vector. The gradients for a backward pass are also the same size as this single parameter vector. 
 
-This is the payload of our message. We also insert an extra element at the start of the vector, which describes what action we want to take with the data we send.
-
-Right now the code is hard coded to assume one server (rank 0) and one client (rank 1), so we hardcode the destination we send the message to.
-
-TODO add support for multiple clients (which means we should modify the message to include the rank of the sender).
+This is the payload of our message. We also insert two extra element at the start of the vector, which describes what action we want to take with the data we send as well as the id of the sender.
 
 ### Parameter Server
 
@@ -62,6 +71,7 @@ The second thread is the training thread, which trains as usual with two excepti
 
 ### Diagram
 <img src="./docs/diagram.jpg" width="500">
+
 Here **2** and **3** happen concurrently. 
 
 ### References
@@ -69,4 +79,4 @@ Here **2** and **3** happen concurrently.
 - [Akka implementation of distbelief](http://alexminnaar.com/implementing-the-distbelief-deep-neural-network-training-framework-with-akka.html)
 - [gevent actor tutorial](http://sdiehl.github.io/gevent-tutorial/#actors)
 - [DistBelief paper](https://static.googleusercontent.com/media/research.google.com/en//archive/large_deep_networks_nips2012.pdf)
-
+- [Analysis of delayed grad problem](https://openreview.net/pdf?id=BJLSGcywG)

@@ -15,6 +15,14 @@ optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
 
 As an example, you can see our implementation running by opening three seperate terminal windows and running `make server`, `make first` and `make second`, which will train a CNN on CIFAR10.
 
+## Benchmarking
+
+![train](/docs/train_time.png)
+
+![test](/docs/train_time.png)
+
+We used AWS c4.xlarge instances to compare the CPU runs, and a GTX 1060 for the GPU run.
+
 ## DownpourSGD for PyTorch
 
 DownpourSGD is pretty simple, there are two core concepts - a parameter server and a training node.

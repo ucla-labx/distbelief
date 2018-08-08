@@ -22,7 +22,7 @@ However we can see that the accuracy between the three nodes is fairly consisten
 
 ![train](/docs/train_time.png)
 
-![test](/docs/train_time.png)
+![test](/docs/test_time.png)
 
 We used AWS c4.xlarge instances to compare the CPU runs, and a GTX 1060 for the GPU run.
 

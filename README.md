@@ -20,7 +20,7 @@ As an example, you can see our implementation running by using the script provid
 **NOTE:** we graph the train/test accuracy of each node, hence node1, node2, node3. A better comparison would be to evaluate the parameter server's params and use that value.
 However we can see that the accuracy between the three nodes is fairly consistent, and adding an evaluator might put too much stress on our server. 
 
-We set the learning rate of the nodes to be learning_rate/freq, or rougly 0.03.
+We scale the learning rate of the nodes to be learning_rate/freq (.03) .
 
 ![train](/docs/train_time.png)
 
@@ -79,4 +79,4 @@ Here **2** and **3** happen concurrently.
 - [Akka implementation of distbelief](http://alexminnaar.com/implementing-the-distbelief-deep-neural-network-training-framework-with-akka.html)
 - [gevent actor tutorial](http://sdiehl.github.io/gevent-tutorial/#actors)
 - [DistBelief paper](https://static.googleusercontent.com/media/research.google.com/en//archive/large_deep_networks_nips2012.pdf)
-
+- [Analysis of delayed grad problem](https://openreview.net/pdf?id=BJLSGcywG)

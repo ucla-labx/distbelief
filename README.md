@@ -3,8 +3,8 @@ Implementing Google's DistBelief paper.
 
 ## Installation/Development instructions
 
-You'll want to create a python3 virtualenv first, after which, you should run `make install`. 
-You'll then be able to use distbelief by importing 
+You'll want to create a python3 virtualenv first by running `make setup`, after which, you should run `make install`. 
+You'll then be able to use distbelief by importing distbelief
 ```python 
 
 from distbelief.optim import DownpourSGD
@@ -13,7 +13,7 @@ optimizer = DownpourSGD(net.parameters(), lr=0.001, freq=50, model=net)
 
 ```
 
-As an example, you can see our implementation running by opening three seperate terminal windows and running `make server`, `make first` and `make second`, which will train a CNN on CIFAR10.
+As an example, you can see our implementation running by using the script provided in `example/main.py`.
 
 ## Benchmarking
 
@@ -41,11 +41,7 @@ We're using `dist.isend` and `dist.recv` to send and receive tensors via PyTorch
 
 For any given model, we squash the parameters to a single parameter vector. The gradients for a backward pass are also the same size as this single parameter vector. 
 
-This is the payload of our message. We also insert an extra element at the start of the vector, which describes what action we want to take with the data we send.
-
-Right now the code is hard coded to assume one server (rank 0) and one client (rank 1), so we hardcode the destination we send the message to.
-
-TODO add support for multiple clients (which means we should modify the message to include the rank of the sender).
+This is the payload of our message. We also insert two extra element at the start of the vector, which describes what action we want to take with the data we send as well as the id of the sender.
 
 ### Parameter Server
 

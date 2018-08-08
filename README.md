@@ -17,6 +17,9 @@ As an example, you can see our implementation running by opening three seperate 
 
 ## Benchmarking
 
+**NOTE:** we graph the train/test accuracy of each node, hence node1, node2, node3. A better comparison would be to evaluate the parameter server's params and use that value.
+However we can see that the accuracy between the three nodes is fairly consistent, and adding an evaluator might put too much stress on our server. 
+
 ![train](/docs/train_time.png)
 
 ![test](/docs/train_time.png)
@@ -70,6 +73,7 @@ The second thread is the training thread, which trains as usual with two excepti
 
 ### Diagram
 <img src="./docs/diagram.jpg" width="500">
+
 Here **2** and **3** happen concurrently. 
 
 ### References

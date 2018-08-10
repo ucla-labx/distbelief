@@ -30,6 +30,8 @@ We used AWS c4.xlarge instances to compare the CPU runs, and a GTX 1060 for the 
 
 ## DownpourSGD for PyTorch
 
+**NOTE**: This documentation is a bit out of date! 
+
 DownpourSGD is pretty simple, there are two core concepts - a parameter server and a training node.
 
 The parameter server is just a copy of the model parameters, it can get a gradient update or send parameters.

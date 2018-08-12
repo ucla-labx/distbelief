@@ -72,6 +72,7 @@ The second thread is the training thread, which trains as usual with two excepti
 - After we compute the gradients, we issue a `GradientUpdate` message, which contains our gradients to the server. 
 
 ### Diagram
+
 <img src="./docs/diagram.jpg" width="500">
 
 Here **2** and **3** happen concurrently. 

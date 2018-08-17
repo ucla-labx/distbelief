@@ -20,7 +20,7 @@ class DownpourListener(MessageListener):
 class DownpourSGD(Optimizer):
     """DownpourSGD"""
 
-    def __init__(self, params, lr=required, freq=required, model=required):
+    def __init__(self, params, lr=required, n_push=required, n_pull=required, model=required):
         """__init__
 
         :param params:
@@ -33,7 +33,8 @@ class DownpourSGD(Optimizer):
 
         defaults = dict(lr=lr,)
         self.accumulated_gradients = torch.zeros(ravel_model_params(model).size())
-        self.freq = freq
+        self.n_pull = n_pull
+        self.n_push = n_push
 
         self.model = model
         # this sets the initial model parameters
@@ -57,7 +58,7 @@ class DownpourSGD(Optimizer):
             loss = closure()
         
         # send parameter request every N iterations
-        if self.idx % self.freq == 0:
+        if self.idx % self.n_pull == 0:
             send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val 
 
         #get the lr
@@ -67,7 +68,7 @@ class DownpourSGD(Optimizer):
         self.accumulated_gradients.add_(-lr, gradients)
 
         # send gradient update every N iterations
-        if self.idx % self.freq == 0:
+        if self.idx % self.n_push == 0:
             send_message(MessageCode.GradientUpdate, self.accumulated_gradients) # send gradients to the server
             self.accumulated_gradients.zero_()
 

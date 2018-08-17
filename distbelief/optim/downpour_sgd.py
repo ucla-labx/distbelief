@@ -20,7 +20,7 @@ class DownpourListener(MessageListener):
 class DownpourSGD(Optimizer):
     """DownpourSGD"""
 
-    def __init__(self, params, lr=required, n_fetch=required, n_push=required, model=required):
+    def __init__(self, params, lr=required, n_push=required, n_pull=required, model=required):
         """__init__
 
         :param params:
@@ -58,7 +58,7 @@ class DownpourSGD(Optimizer):
             loss = closure()
         
         # send parameter request every N iterations
-        if self.idx % self.n_fetch == 0:
+        if self.idx % self.n_pull == 0:
             send_message(MessageCode.ParameterRequest, self.accumulated_gradients) # dummy val 
 
         #get the lr
@@ -68,7 +68,7 @@ class DownpourSGD(Optimizer):
         self.accumulated_gradients.add_(-lr, gradients)
 
         # send gradient update every N iterations
-        if self.idx % self.n_pull == 0:
+        if self.idx % self.n_push == 0:
             send_message(MessageCode.GradientUpdate, self.accumulated_gradients) # send gradients to the server
             self.accumulated_gradients.zero_()
 

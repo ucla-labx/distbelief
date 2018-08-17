@@ -16,6 +16,9 @@ optimizer = DownpourSGD(net.parameters(), lr=0.1, n_push=5, n_pull=5, model=net)
 
 As an example, you can see our implementation running by using the script provided in `example/main.py`.
 
+To run a 2-training node setup locally, open up three terminal windows, source the `venv` and then run `make first`, `make second`, and `make server`.
+This will begin training AlexNet on CIFAR10 locally with all default params.
+
 ## Benchmarking
 
 **NOTE:** we graph the train/test accuracy of each node, hence node1, node2, node3. A better comparison would be to evaluate the parameter server's params and use that value.
@@ -36,6 +39,8 @@ We used AWS c4.xlarge instances to compare the CPU runs, and a GTX 1060 for the 
 <img src="./docs/diagram.jpg" width="500">
 
 Here **2** and **3** happen concurrently. 
+
+You can read more about our implementation [here](https://jcaip.github.io/Distbelief/).
 
 ### References
 - [Pytorch distributed tutorial](http://pytorch.org/tutorials/intermediate/dist_tuto.html)

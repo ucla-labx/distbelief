@@ -9,3 +9,6 @@ install:
 graph:
 	python example/graph.py
 	mv train_time.png test_time.png docs
+
+local:
+

@@ -25,5 +25,15 @@ single:
 gpu:
 	python example/main.py --no-distributed --cuda
 
-	
+dist:
+	python3 setup.py sdist bdist_wheel
+
+upload: dist
+	twine upload dist/*
+
+upload-test: dist
+	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+install-test:
+	python3 -m pip install --index-url https://test.pypi.org/simple/ pytorch-distbelief	
 

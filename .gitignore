@@ -7,3 +7,6 @@ venv/
 .idea/
 .ipynb_checkpoints/*
 log/*
+build/*
+dist/*
+pytorch_distbelief.egg-info/*

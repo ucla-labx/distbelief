@@ -1,7 +1,12 @@
 # distbelief
 Implementing Google's DistBelief paper.
 
+Check out the (https://jcaip.github.io/Distbelief/)[blog post]!
 ## Installation/Development instructions
+
+To install the latest stable version (pytorch-distbelief 0.1.0), run `pip install pytorch-distbelief`
+
+Otherwise, you can build and run the latest master with the instructions below.
 
 You'll want to create a python3 virtualenv first by running `make setup`, after which, you should run `make install`. 
 

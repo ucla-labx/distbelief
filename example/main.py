@@ -106,7 +106,7 @@ def main(args):
 
     df = pd.DataFrame(logs)
     print(df)
-    df.to_csv('log/node{}.csv'.format(dist.get_rank()), index_label='index')
+    df.to_csv('log/{}_node{}.csv'.format(args.optimizer, dist.get_rank()), index_label='index')
 
     print('Finished Training')
 

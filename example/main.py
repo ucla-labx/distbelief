@@ -16,7 +16,7 @@ from sklearn.metrics import classification_report, accuracy_score, confusion_mat
 import pandas as pd
 
 import torch.optim as optim
-from distbelief.optim import DownpourSGD
+from distbelief.optim import DownpourSGD, AsyncDecentralizedSGD
 from distbelief.server import ParameterServer
 
 def get_dataset(args, transform):
@@ -49,11 +49,14 @@ def main(args):
     trainloader, testloader = get_dataset(args, transform)
     net = AlexNet()
 
-    if args.no_distributed:
+    if args.optimizer == 'SGD':
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
-    else:
+
+    elif args.optimizer == 'DownpourSGD':
         optimizer = DownpourSGD(net.parameters(), lr=args.lr, n_push=args.num_push, n_pull=args.num_pull, model=net)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
+
+    elif args.optimizer == 'AsyncDecentralizedSGD':
+        optimizer = AsyncDecentralizedSGD(net.parameters(), lr=args.lr, n_sync=args.num_push, model=net)
 
     # train
     net.train()
@@ -103,13 +106,7 @@ def main(args):
 
     df = pd.DataFrame(logs)
     print(df)
-    if args.no_distributed:
-        if args.cuda:
-            df.to_csv('log/gpu.csv', index_label='index')
-        else:
-            df.to_csv('log/single.csv', index_label='index')
-    else:
-        df.to_csv('log/node{}.csv'.format(dist.get_rank()), index_label='index')
+    df.to_csv('log/node{}.csv'.format(dist.get_rank()), index_label='index')
 
     print('Finished Training')
 
@@ -156,7 +153,7 @@ if __name__ == "__main__":
     parser.add_argument('--num-push', type=int, default=5, metavar='N', help='how often to push grads (default: 5)')
     parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N', help='how often to evaluate and print out')
-    parser.add_argument('--no-distributed', action='store_true', default=False, help='whether to use DownpourSGD or normal SGD')
+    parser.add_argument('--optimizer', type=str, default='SGD', help='what optimizer to use')
     parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
     parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
@@ -166,7 +163,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    if not args.no_distributed:
+    if args.optimizer == 'DownpourSGD' or args.optimizer == 'AsyncDistributedSGD':
         """ Initialize the distributed environment.
         Server and clients must call this as an entry point.
         """

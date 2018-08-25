@@ -163,7 +163,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(args)
 
-    if args.optimizer == 'DownpourSGD' or args.optimizer == 'AsyncDistributedSGD':
+    if args.optimizer == 'DownpourSGD' or args.optimizer == 'AsyncDecentralizedSGD':
         """ Initialize the distributed environment.
         Server and clients must call this as an entry point.
         """

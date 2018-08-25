@@ -102,7 +102,6 @@ def main(args):
             logs.append(log_obj)
                 
         val_loss, val_accuracy = evaluate(net, testloader, args, verbose=True)
-        scheduler.step(val_loss)
 
     df = pd.DataFrame(logs)
     print(df)
@@ -148,9 +147,9 @@ if __name__ == "__main__":
     parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=10000, metavar='N', help='input batch size for testing (default: 10000)')
     parser.add_argument('--epochs', type=int, default=20, metavar='N', help='number of epochs to train (default: 20)')
-    parser.add_argument('--lr', type=float, default=0.003, metavar='LR', help='learning rate (default: 0.1)')
+    parser.add_argument('--lr', type=float, default=0.01, metavar='LR', help='learning rate (default: 0.1)')
     parser.add_argument('--num-pull', type=int, default=5, metavar='N', help='how often to pull params (default: 5)')
-    parser.add_argument('--num-push', type=int, default=5, metavar='N', help='how often to push grads (default: 5)')
+    parser.add_argument('--num-push', type=int, default=2, metavar='N', help='how often to push grads (default: 5)')
     parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N', help='how often to evaluate and print out')
     parser.add_argument('--optimizer', type=str, default='SGD', help='what optimizer to use')

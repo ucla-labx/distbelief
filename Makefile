@@ -1,7 +1,6 @@
 setup:
-	-sudo apt-get -y virtualenv
-	virtualenv -p python3 venv
-	. venv/bin/activate && pip install -r requirements.txt && pip install .
+	conda create -n distbelief 
+	source activate distbelief && pip install -r requirements.txt && pip install .
 
 install:
 	pip install .

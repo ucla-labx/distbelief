@@ -2,11 +2,14 @@ from enum import Enum
 import logging
 import torch
 import torch.distributed as dist
-from threading import Thread
+from threading import Thread, Lock
 from distbelief.utils.serialization import ravel_model_params
 
+logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
 
+
+message_lock = Lock()
 
 class MessageCode(Enum):
     """Different types of messages between client and server that we support go here."""
@@ -14,7 +17,6 @@ class MessageCode(Enum):
     GradientUpdate = 1
     ParameterUpdate = 2
     EvaluateParams = 3
-
 
 class MessageListener(Thread):
     """MessageListener
@@ -42,10 +44,10 @@ class MessageListener(Thread):
 
     def run(self):
         _LOGGER.info("Started Running!")
-        self.running = True
-        while self.running:
+        while True:
+            dist_req_obj = dist.irecv(tensor=self.m_parameter, src=1)
+            dist_req_obj.wait()
             _LOGGER.info("Polling for message...")
-            dist.recv(tensor=self.m_parameter)
             self.receive(int(self.m_parameter[0].item()),
                          MessageCode(self.m_parameter[1].item()),
                          self.m_parameter[2:])
@@ -58,5 +60,5 @@ def send_message(message_code, payload, dst=0):
     _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
     m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
     m_parameter = torch.cat((m_parameter, payload))
-    dist.isend(tensor=m_parameter, dst=dst)
-
+    dist.send(tensor=m_parameter, dst=dst)
+    print("Message sent")

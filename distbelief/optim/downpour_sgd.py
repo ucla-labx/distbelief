@@ -38,7 +38,7 @@ class DownpourSGD(Optimizer):
 
         self.model = model
         # this sets the initial model parameters
-        send_message(MessageCode.ParameterUpdate, ravel_model_params(self.model))
+        # send_message(MessageCode.ParameterUpdate, ravel_model_params(self.model))
         self.idx = 0
 
         listener = DownpourListener(self.model)

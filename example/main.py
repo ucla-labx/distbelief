@@ -16,7 +16,7 @@ from sklearn.metrics import classification_report, accuracy_score, confusion_mat
 import pandas as pd
 
 import torch.optim as optim
-from distbelief.optim import DownpourSGD
+from distbelief.optim import DownpourSGD # , AsyncDecentralizedSGD
 from distbelief.server import ParameterServer
 
 def get_dataset(args, transform):
@@ -33,8 +33,8 @@ def get_dataset(args, transform):
         trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
         testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=1)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=0)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=0)
     return trainloader, testloader
 
 def main(args):
@@ -49,11 +49,15 @@ def main(args):
     trainloader, testloader = get_dataset(args, transform)
     net = AlexNet()
 
-    if args.no_distributed:
+    if args.optimizer == 'SGD':
         optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.0)
-    else:
+
+    elif args.optimizer == 'DownpourSGD':
         optimizer = DownpourSGD(net.parameters(), lr=args.lr, n_push=args.num_push, n_pull=args.num_pull, model=net)
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=1, verbose=True, min_lr=1e-3)
+
+    elif args.optimizer == 'AsyncDecentralizedSGD':
+        raise NotImplementedError("Not yet implemented")
+        # optimizer = AsyncDecentralizedSGD(net.parameters(), lr=args.lr, n_sync=args.num_push, model=net)
 
     # train
     net.train()
@@ -63,7 +67,6 @@ def main(args):
     for epoch in range(args.epochs):  # loop over the dataset multiple times
         print("Training for epoch {}".format(epoch))
         for i, data in enumerate(trainloader, 0):
-            # get the inputs
             inputs, labels = data
 
             if args.cuda:
@@ -99,17 +102,10 @@ def main(args):
             logs.append(log_obj)
                 
         val_loss, val_accuracy = evaluate(net, testloader, args, verbose=True)
-        scheduler.step(val_loss)
 
     df = pd.DataFrame(logs)
     print(df)
-    if args.no_distributed:
-        if args.cuda:
-            df.to_csv('log/gpu.csv', index_label='index')
-        else:
-            df.to_csv('log/single.csv', index_label='index')
-    else:
-        df.to_csv('log/node{}.csv'.format(dist.get_rank()), index_label='index')
+    df.to_csv('log/{}_node{}.csv'.format(args.optimizer, dist.get_rank()), index_label='index')
 
     print('Finished Training')
 
@@ -151,28 +147,31 @@ if __name__ == "__main__":
     parser.add_argument('--batch-size', type=int, default=64, metavar='N', help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=10000, metavar='N', help='input batch size for testing (default: 10000)')
     parser.add_argument('--epochs', type=int, default=20, metavar='N', help='number of epochs to train (default: 20)')
-    parser.add_argument('--lr', type=float, default=0.003, metavar='LR', help='learning rate (default: 0.1)')
+    parser.add_argument('--lr', type=float, default=0.01, metavar='LR', help='learning rate (default: 0.1)')
     parser.add_argument('--num-pull', type=int, default=5, metavar='N', help='how often to pull params (default: 5)')
-    parser.add_argument('--num-push', type=int, default=5, metavar='N', help='how often to push grads (default: 5)')
+    parser.add_argument('--num-push', type=int, default=2, metavar='N', help='how often to push grads (default: 5)')
     parser.add_argument('--cuda', action='store_true', default=False, help='use CUDA for training')
     parser.add_argument('--log-interval', type=int, default=20, metavar='N', help='how often to evaluate and print out')
-    parser.add_argument('--no-distributed', action='store_true', default=False, help='whether to use DownpourSGD or normal SGD')
-    parser.add_argument('--rank', type=int, metavar='N', help='rank of current process (0 is server, 1+ is training node)')
-    parser.add_argument('--world-size', type=int, default=3, metavar='N', help='size of the world')
+    parser.add_argument('--optimizer', type=str, default='SGD', help='what optimizer to use')
+    parser.add_argument('--rank', type=int, metavar='N', default=0, help='rank of current process (0 is server, 1+ is training node)')
+    parser.add_argument('--world-size', type=int, default=0, metavar='N', help='size of the world')
     parser.add_argument('--server', action='store_true', default=False, help='server node?')
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='which dataset to train on')
     parser.add_argument('--master', type=str, default='localhost', help='ip address of the master (server) node')
     parser.add_argument('--port', type=str, default='29500', help='port on master node to communicate with')
+    parser.add_argument('--backend', type=str, default='mpi', help='communication backend to use')
     args = parser.parse_args()
     print(args)
 
-    if not args.no_distributed:
+    if args.optimizer == 'DownpourSGD' or args.optimizer == 'AsyncDecentralizedSGD':
         """ Initialize the distributed environment.
         Server and clients must call this as an entry point.
         """
         os.environ['MASTER_ADDR'] = args.master
         os.environ['MASTER_PORT'] = args.port
-        dist.init_process_group('tcp', rank=args.rank, world_size=args.world_size)
-        if args.server:
+        dist.init_process_group(args.backend, rank=args.rank, world_size=args.world_size)
+        print('Process {} of {} initialized'.format(dist.get_rank(), dist.get_world_size()))
+        if dist.get_rank() == 0:
+            print("Starting server!")
             init_server(args)
     main(args)

@@ -24,9 +24,11 @@ class ParameterServer(MessageListener):
 
         if message_code == MessageCode.ParameterUpdate:
             #be sure to clone here
+            print("ASDF")
             self.parameter_shard = parameter.clone()
 
         elif message_code == MessageCode.ParameterRequest:
+            print("testing")
             send_message(MessageCode.ParameterUpdate, self.parameter_shard, dst=sender)    
 
         elif message_code == MessageCode.GradientUpdate:

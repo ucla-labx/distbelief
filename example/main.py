@@ -141,7 +141,7 @@ def evaluate(net, testloader, args, verbose=False):
     
     return test_loss, test_accuracy
 
-def init_server(args):
+def init_server():
     model = AlexNet()
     server = ParameterServer(model=model)
     server.run()
@@ -174,5 +174,5 @@ if __name__ == "__main__":
         os.environ['MASTER_PORT'] = args.port
         dist.init_process_group('tcp', rank=args.rank, world_size=args.world_size)
         if args.server:
-            init_server(args)
+            init_server()
     main(args)

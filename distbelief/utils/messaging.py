@@ -45,9 +45,9 @@ class MessageListener(Thread):
     def run(self):
         _LOGGER.info("Started Running!")
         while True:
-            dist_req_obj = dist.irecv(tensor=self.m_parameter, src=1)
-            dist_req_obj.wait()
-            _LOGGER.info("Polling for message...")
+            _LOGGER.info("Polling for message... [pytorch]")
+            dist.recv(tensor=self.m_parameter)
+            _LOGGER.info("Finished polling for message... [pytorch]")
             self.receive(int(self.m_parameter[0].item()),
                          MessageCode(self.m_parameter[1].item()),
                          self.m_parameter[2:])
@@ -57,8 +57,8 @@ def send_message(message_code, payload, dst=0):
     """Sends a message to a destination
     Concatenates both the message code and destination with the payload into a single tensor and then sends that as a tensor
     """
-    _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
     m_parameter = torch.Tensor([dist.get_rank(), message_code.value])
     m_parameter = torch.cat((m_parameter, payload))
-    dist.send(tensor=m_parameter, dst=dst)
-    print("Message sent")
+    _LOGGER.info("SENDING MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))
+    dist.isend(tensor=m_parameter, dst=dst)
+    _LOGGER.info("SENT MESSAGE: {} RANK: {}".format(message_code, dist.get_rank()))

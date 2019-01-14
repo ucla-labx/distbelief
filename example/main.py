@@ -33,6 +33,20 @@ def get_dataset(args, transform):
         trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
         testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
+
+
+    if args.split_data:
+        split_lengths = [len(trainset)//args.world_size for _ in range(args.world_size)]
+        while sum(split_lengths) != len(trainset):
+            for l in split_lengths:
+                l+=1
+                if sum(split_lengths) == len(trainset):
+                    break
+        assert sum(split_lengths) == len(trainset)
+        training_sets = torch.utils.data.random_split(trainset, split_lengths)
+        trainloader = torch.utils.data.DataLoader(training_sets[args.rank], batch_size=args.batch_size, shuffle=True, num_workers=1)
+        testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)    
+        return trainloader, testloader
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, num_workers=1)
     testloader = torch.utils.data.DataLoader(testset, batch_size=args.test_batch_size, shuffle=False, num_workers=1)
     return trainloader, testloader
@@ -163,6 +177,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset', type=str, default='CIFAR10', help='which dataset to train on')
     parser.add_argument('--master', type=str, default='localhost', help='ip address of the master (server) node')
     parser.add_argument('--port', type=str, default='29500', help='port on master node to communicate with')
+    parser.add_argument('--split-data', action='store_true', default=False, help='split data set into random nonoverlapping components, give each node different data')
     args = parser.parse_args()
     print(args)
 
